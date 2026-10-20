@@ -1,13 +1,16 @@
 # Syntax
 
+[Open Syntax](https://georgephilippou.github.io/syntax/) · [Source on GitHub](https://github.com/GeorgePhilippou/syntax)
+
 A personal programming syntax reference built with React, TypeScript and Vite. No backend, API keys, accounts, external fonts, analytics or runtime dependencies on other services.
 
 ## Launch on macOS
 
-Install Node.js 22.12+ (or a newer supported LTS) and npm. In Terminal:
+Install Node.js 24 LTS and npm. In Terminal:
 
 ```sh
-cd /Users/georgephilippou/Developer/Syntax
+git clone https://github.com/GeorgePhilippou/syntax.git
+cd syntax
 npm ci
 npm run dev
 ```
@@ -31,7 +34,13 @@ For long-term use, serve the `dist/` folder from any static HTTPS host. No Node 
 - **Chrome:** use the install icon in the address bar, or the browser menu under **Cast, save and share → Install page as app**. The built-in Install app panel also exposes a direct install button when Chrome offers it.
 - After installing, open it once while connected, then disconnect and reopen to confirm offline operation on your Mac. An installed Safari web app can have separate browser storage: favourites may need to be saved in the installed app.
 
-A private Sites preview is provided separately. Its authentication layer requires connectivity when the host asks you to sign in. Use the local production build or your own static HTTPS deployment for offline use without a host sign-in gate.
+## GitHub Pages deployment
+
+GitHub is the source of truth. The `main` branch deploys automatically to https://georgephilippou.github.io/syntax/ through `.github/workflows/pages.yml`. Pull requests run the same checks without publishing. The workflow installs locked dependencies, validates code examples, builds TypeScript/Vite, tests the offline shell at both root and `/syntax/`, and publishes only `dist/` after checks pass.
+
+To update: edit the source, run the validation commands below, commit and push to `main`, then wait for **Check and deploy Syntax** to finish in GitHub Actions. Verify the live URL after deployment. Relative asset URLs, manifest scope and service-worker registration support the `/syntax/` project path without changing local development URLs.
+
+Favourites and preferences remain in each browser. They are not uploaded to GitHub; the hosted origin starts with its own local preferences.
 
 ## Verification status
 
@@ -45,13 +54,13 @@ The production build, 76 C/C++/Python/JavaScript parser checks, core interaction
 - Bookmark a card to save it locally; the Favourites view shows saved cards in the selected language.
 - Copy buttons copy exact code, including indentation. Syntax notes identify context, required headers, versions and common traps.
 - Compare a card, or open Compare languages and choose a concept. Toggle any of the five languages. The accent block explains the important syntax differences.
-- Reading preferences adjust font size and extra line spacing. All controls work with Tab, Shift+Tab, Enter and Space; dialogs trap focus, support Escape and restore focus.
+- Settings → Appearance selects one of five notebook looks, with Colour Tabs as the default. Your chosen look persists locally. Settings also adjust font size and extra line spacing. All controls work with Tab, Shift+Tab, Enter and Space; dialogs trap focus, support Escape and restore focus.
 
 ## Source layout
 
 - `src/data.ts`: language metadata, 18 shared concepts, language-specific examples and extra concepts (93 cards total: C 20, Python 18, MATLAB 18, C++ 19, JavaScript 18).
 - `src/main.tsx`: reusable code, card and accessible dialog components; search, comparison, favourites and installation UI.
-- `src/style.css`: responsive dark theme, local system fonts and reduced-motion support.
+- `src/style.css`: base layout, local system fonts and reduced-motion support; `src/theme.css` adds the warm ivory/olive theme and complementary language palettes.
 - `public/manifest.webmanifest`, `public/sw.js`: install metadata and same-origin offline caching.
 - `tests/content.mjs`: collection completeness and compiler/parser checks.
 

@@ -1,10 +1,10 @@
 export type LanguageId = 'c' | 'python' | 'matlab' | 'cpp' | 'javascript';
-export const languages: {id:LanguageId;name:string;symbol:string;color:string;description:string;version:string}[] = [
-{id:'c',name:'C',symbol:'C',color:'#a8c9ff',description:'Close to the machine. Clear on the details.',version:'C17'},
-{id:'python',name:'Python',symbol:'Py',color:'#f0cf7a',description:'Readable by design. Powerful by nature.',version:'Python 3.10+'},
-{id:'matlab',name:'MATLAB',symbol:'M',color:'#f2a179',description:'Think in matrices. Build with numbers.',version:'MATLAB R2021a+'},
-{id:'cpp',name:'C++',symbol:'C⁺⁺',color:'#c4afff',description:'Fine control. Modern abstractions.',version:'C++17'},
-{id:'javascript',name:'JavaScript',symbol:'JS',color:'#e3da80',description:'Small expressions. Endless possibilities.',version:'ES2020+'}];
+export const languages: {id:LanguageId;name:string;symbol:string;color:string;surface:string;ink:string;description:string;version:string}[] = [
+{id:'c',name:'C',symbol:'C',color:'#c6cf9a',surface:'#c6cf9a',ink:'#354328',description:'Close to the machine. Clear on the details.',version:'C17'},
+{id:'python',name:'Python',symbol:'Py',color:'#a8c7d0',surface:'#b8d4dc',ink:'#25454e',description:'Readable by design. Powerful by nature.',version:'Python 3.10+'},
+{id:'matlab',name:'MATLAB',symbol:'M',color:'#edb491',surface:'#ebbc9e',ink:'#633e30',description:'Think in matrices. Build with numbers.',version:'MATLAB R2021a+'},
+{id:'cpp',name:'C++',symbol:'C⁺⁺',color:'#ccbadf',surface:'#d4c3e3',ink:'#503f62',description:'Fine control. Modern abstractions.',version:'C++17'},
+{id:'javascript',name:'JavaScript',symbol:'JS',color:'#e3cb7f',surface:'#edda9a',ink:'#5a491c',description:'Small expressions. Endless possibilities.',version:'ES2020+'}];
 export const categories=['All concepts','Basics','Control flow','Functions','Data structures','Advanced'] as const;
 export type Category=typeof categories[number];
 export const concepts = [

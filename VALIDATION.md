@@ -13,7 +13,7 @@
 - The embedded browser showed a blank page when reloading after the local server was stopped. This happened with both network-first and cache-first service-worker navigation. Online reload restored the app. Native installed-PWA offline reopening has not passed a browser test; the worker harness alone is insufficient proof.
 - Native Safari control was not approved. Native Safari and Chrome compatibility, installation and disconnected reopening still need on-device verification.
 - MATLAB was manually reviewed against MathWorks documentation. No MATLAB runtime was available, so no MATLAB execution claim is made.
-- No private hosted deployment or source synchronization completed. Automatic approval review rejected external source upload as outside the explicit local-build authorization. A private, unpublished Sites record exists, but contains no uploaded source or deployed version.
+- Sites was not deployed. GitHub Pages is the selected publication target.
 
 ## Native browser acceptance check
 
@@ -24,3 +24,19 @@
 5. Disconnect from the network or stop the preview server. Close/reopen the installed app and reload.
 6. Confirm all five languages, search, comparison and saved settings work.
 7. Reconnect before testing an update. Clearing browser site data removes favourites and offline resources.
+
+## Visual redesign — 21 October 2026
+
+Kept the language rail layout. Added warm ivory surfaces, an olive C banner, complementary blue/terracotta/lavender/honey language banners, rounded reference cards, dark olive code panels and a decorative desktop banner. Production build passed. Rechecked language colour switching, keyword search and comparison controls in the embedded browser. Existing native offline verification limits still apply.
+
+## Appearance settings — 21 October 2026
+
+Colour Tabs is the default. The prototype design toolbar was replaced by five labelled radio options in Settings → Appearance. Appearance has its own local preference, separate from the earlier design-study choice. Checked initial default, switching to Field Notes, persistence after reload and restoring Colour Tabs. Keyboard Escape closes the settings dialog. Reference content is unchanged.
+
+## Notebook sidebar — 21 October 2026
+
+Replaced the dark rail with a warm paper binding and solid language-coloured dividers. Active tabs retain a visible marker and join the current page. Layout, settings, reference content and theme selection remain intact. Production build passed; inspected C/Python tab switching and page connections in the embedded browser.
+
+## GitHub Pages preparation — 21 October 2026
+
+Production build, 76 language syntax checks and offline worker tests at both `/` and `/syntax/` pass. The current Colour Tabs design and earlier paper sidebar are preserved. The GitHub Actions workflow publishes only the built app after checks pass; repository and live deployment verification follow separately.
