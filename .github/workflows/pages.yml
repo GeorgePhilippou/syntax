@@ -32,6 +32,8 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Check reference examples
         run: npm test
+        env:
+          SYNTAX_STRICT: '1'   # fail rather than skip if clang, rustc or Python is missing
       - name: Build production app
         run: npm run build
       - name: Check offline shell at root and project paths

@@ -1,81 +1,74 @@
 # Syntax
 
-[Open Syntax](https://georgephilippou.github.io/syntax/) · [Source on GitHub](https://github.com/GeorgePhilippou/syntax)
+[Open Syntax](https://georgephilippou.github.io/syntax/) · [Source](https://github.com/GeorgePhilippou/syntax)
 
-A personal programming syntax reference built with React, TypeScript and Vite. No backend, API keys, accounts, external fonts, analytics or runtime dependencies on other services.
+A personal, offline programming reference for **C, C++, Python, MATLAB, JavaScript, Rust, Bash and Git**: about 390 short cards, each with real code and the gotchas worth remembering. Examples in C, C++, Rust, Python, JavaScript and Bash are checked by real compilers and parsers on every build.
 
-## Launch on macOS
+![Syntax showing Python cards](preview/syntax.png)
 
-Install Node.js 24 LTS and npm. In Terminal:
+## Using it
+
+- **Languages**: pick one from the left (or press `1`–`8`). Section buttons at the top jump down the page.
+- **Search**: press `/` or `⌘K`. Search covers every language, your notes included. Start with a language name to narrow it: `rust hashmap`, `py slicing`, `git undo`. `Esc` clears the search.
+- **Compare**: the ⇄ button on a card, or **Compare** in the sidebar, lines a concept up across the languages you pick.
+- **Save and notes**: bookmark a card, or add your own note to it. Both show up under **Saved**.
+- **Links**: every card has its own URL (`#/python/slicing`), so you can bookmark it in the browser, and the back button works.
+- **Settings**: light or dark theme, text size, whether to show explanations, wrapping long code lines, and backup/restore of your saved cards and notes.
+
+Saved cards, notes and settings live in your browser's local storage. Use **Settings → Download backup** now and then, because clearing site data deletes them.
+
+## Adding or editing cards
+
+All content is in `content/<language>.md`, one file per language. A card looks like this:
+
+````markdown
+# Collections                 ← category (section heading)
+
+## Slicing                    ← card title
+@id slicing                   ← optional; cards with the same id line up in Compare
+@keywords substring reverse   ← extra words for search
+@diff [start:stop:step]       ← one-line summary shown in Compare
+@check body                   ← optional: how the example is compiled (see below)
+
+Take part of a string or list.   ← first paragraph = summary
+
+```python
+s[1:4]
+```
+
+Anything after the code is the explanation. Supports `code`, **bold** and - lists.
+````
+
+`@check` controls how C, C++ and Rust snippets are wrapped for compilation: `body` puts the code inside `main` (the default unless the snippet already has a `main`), `top` puts it at file scope, `program` compiles it as-is, and `skip` leaves it unchecked. A code block in another language, such as a `bash` block inside a Rust card, isn't checked.
+
+To add a whole new language, create `content/<id>.md` with front matter (`name`, `symbol`, `order`, `color`, `version`, `highlight`, `description`). If it needs syntax highlighting, add its Prism component in `src/lib/highlight.ts`. If it can be checked, add a checker in `tests/content.mjs`.
+
+## Development
+
+Requires Node.js 22+.
 
 ```sh
-git clone https://github.com/GeorgePhilippou/syntax.git
-cd syntax
 npm ci
-npm run dev
+npm run dev          # http://127.0.0.1:5173
+npm test             # parse every card and compile/parse every example
+npm run build        # production build in dist/
+npm run test:offline # service-worker harness (after a build)
 ```
 
-Open the Local URL printed by Vite (usually http://127.0.0.1:5173). The development server is for editing; offline caching is enabled only in production.
+`npm test` uses `clang`/`clang++` (Xcode Command Line Tools), `rustc` (via [rustup](https://rustup.rs)), `python3` and `bash`. If one of them is missing locally, that language is skipped with a warning. CI sets `SYNTAX_STRICT=1` so a missing toolchain fails instead. MATLAB examples are reviewed by hand (no runtime available). Git cards are commands and aren't executed.
 
-## Production and offline use
+### Code layout
 
-```sh
-npm run build
-npm run preview -- --port 4173
-```
+- `content/*.md`: the reference content.
+- `src/content/parse.ts`: the Markdown card parser, shared by the app and the tests.
+- `src/App.tsx`: layout, routing, keyboard shortcuts and stored state.
+- `src/components/`: cards, code blocks, language page, search results, compare grid, saved view and settings.
+- `src/lib/`: search, hash routing, highlighting, local storage and offline/service-worker helpers.
+- `src/styles.css`: one stylesheet, with light and dark tokens. Each language's colour tints the page.
+- `public/sw.js`: the offline cache. `scripts/version-worker.mjs` stamps it with a build hash.
 
-Open http://127.0.0.1:4173. Wait for **Ready for offline use** at the bottom. The service worker caches the entire application, reference collection, highlighting and icons. Disconnect or stop the server, then reload the same URL to verify offline access. First use requires a successful online load. HTTPS is required on a hosted domain; localhost is also a secure context.
+## Deployment and offline use
 
-For long-term use, serve the `dist/` folder from any static HTTPS host. No Node server is required in production. Relative asset URLs support a subdirectory deployment. Keep the URL and browser profile consistent: favourites and reading settings belong to that browser and origin. Clearing site data removes both stored preferences and offline resources. Browser storage eviction can also remove offline resources; reopen online to restore them.
+Pushing to `main` runs `.github/workflows/pages.yml`, which tests, builds and deploys to GitHub Pages. Pull requests run the same checks without deploying.
 
-## Install as a desktop app
-
-- **Safari, macOS Sonoma or newer:** open the production URL, then use **File → Add to Dock** (or Share → Add to Dock). Open the new Dock app while online and wait for offline readiness. [Apple instructions](https://support.apple.com/en-ca/guide/safari/ibrw9e991864/mac).
-- **Chrome:** use the install icon in the address bar, or the browser menu under **Cast, save and share → Install page as app**. The built-in Install app panel also exposes a direct install button when Chrome offers it.
-- After installing, open it once while connected, then disconnect and reopen to confirm offline operation on your Mac. An installed Safari web app can have separate browser storage: favourites may need to be saved in the installed app.
-
-## GitHub Pages deployment
-
-GitHub is the source of truth. The `main` branch deploys automatically to https://georgephilippou.github.io/syntax/ through `.github/workflows/pages.yml`. Pull requests run the same checks without publishing. The workflow installs locked dependencies, validates code examples, builds TypeScript/Vite, tests the offline shell at both root and `/syntax/`, and publishes only `dist/` after checks pass.
-
-To update: edit the source, run the validation commands below, commit and push to `main`, then wait for **Check and deploy Syntax** to finish in GitHub Actions. Verify the live URL after deployment. Relative asset URLs, manifest scope and service-worker registration support the `/syntax/` project path without changing local development URLs.
-
-Favourites and preferences remain in each browser. They are not uploaded to GitHub; the hosted origin starts with its own local preferences.
-
-## Verification status
-
-The production build, 76 C/C++/Python/JavaScript parser checks, core interaction checks and offline service-worker harness pass. The embedded Codex browser did not render an offline reload after the preview server was stopped, despite a populated cache. Native Safari control was unavailable and a Chrome installation was not exercised. **Installed Safari/Chrome offline reopening remains unverified.** Use the installation steps above to verify on your Mac; see `VALIDATION.md` for the test record.
-
-## Navigation
-
-- Choose C, Python, MATLAB, C++ or JavaScript from the language rail.
-- **⌘K / Ctrl+K** focuses search. Search all words in titles, aliases, descriptions and code. Escape clears and exits search.
-- Category buttons narrow the selected language. Filters also apply to favourites.
-- Bookmark a card to save it locally; the Favourites view shows saved cards in the selected language.
-- Copy buttons copy exact code, including indentation. Syntax notes identify context, required headers, versions and common traps.
-- Compare a card, or open Compare languages and choose a concept. Toggle any of the five languages. The accent block explains the important syntax differences.
-- Settings → Appearance selects one of five notebook looks, with Colour Tabs as the default. Your chosen look persists locally. Settings also adjust font size and extra line spacing. All controls work with Tab, Shift+Tab, Enter and Space; dialogs trap focus, support Escape and restore focus.
-
-## Source layout
-
-- `src/data.ts`: language metadata, 18 shared concepts, language-specific examples and extra concepts (93 cards total: C 20, Python 18, MATLAB 18, C++ 19, JavaScript 18).
-- `src/main.tsx`: reusable code, card and accessible dialog components; search, comparison, favourites and installation UI.
-- `src/style.css`: base layout, local system fonts and reduced-motion support; `src/theme.css` adds the warm ivory/olive theme and complementary language palettes.
-- `public/manifest.webmanifest`, `public/sw.js`: install metadata and same-origin offline caching.
-- `tests/content.mjs`: collection completeness and compiler/parser checks.
-
-To add a shared concept, add metadata to `concepts` and a matching example for each language. TypeScript checks coverage. Use `extras` for concepts specific to one language. Keep snippets short and put required context in `note`.
-
-## Validation
-
-```sh
-npm run build
-npm test
-npm run test:offline
-```
-
-The content test needs `clang`, `clang++` (Xcode Command Line Tools) and Python 3.10+. Set `SYNTAX_PYTHON=/absolute/path/to/python3` if your default Python is older. It checks C17 and C++17 syntax using small harnesses, Python using `ast.parse`, and JavaScript using Node's parser. These are syntax checks, not proofs of runtime behavior. MATLAB examples were reviewed manually; no MATLAB runtime is bundled or available for automated verification.
-
-Reference decisions were checked against [Python's compound statements](https://docs.python.org/3.10/reference/compound_stmts.html), [MATLAB for-loop behavior](https://www.mathworks.com/help/matlab/ref/for.html) and [MATLAB indexing](https://www.mathworks.com/help/matlab/math/array-indexing.html). Inline notes distinguish excerpts from complete programs. C/C++ control-flow excerpts need a containing function and stated headers. JavaScript imports demonstrate two separate files; browser file reading requires user selection.
-
-Production builds automatically give the service-worker cache a version derived from the built HTML and its hashed asset references. The installer collects the hashed JS/CSS from the new HTML so the offline shell and assets belong to one build. Check offline reload after every deployment.
+After the first online visit, the service worker caches the whole app, so it works offline. To install it as an app: in Safari, **File → Add to Dock**; in Chrome, use the install icon in the address bar. When a new version is deployed, the app picks it up on the next visit and shows a notice to reload.
