@@ -26,10 +26,19 @@ self.addEventListener('fetch', event => {
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
     if (event.request.mode === 'navigate') {
+      // Network first, so a new deploy shows on the first load; the cached
+      // shell is the fallback when offline or the network is very slow.
       const shell = await cache.match(new URL('./', self.location.href));
-      if (shell) return shell;
-      try { return await fetch(event.request); }
-      catch { return Response.error(); }
+      try {
+        const network = fetch(event.request);
+        if (!shell) return await network;
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000));
+        const response = await Promise.race([network, timeout]);
+        if (response.ok) return response;
+        return shell;
+      } catch {
+        return shell ?? Response.error();
+      }
     }
     return await cache.match(event.request) || fetch(event.request);
   })());
