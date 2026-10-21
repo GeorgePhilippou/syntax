@@ -6,6 +6,7 @@ import 'prismjs/components/prism-matlab';
 import 'prismjs/components/prism-rust';
 import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-toml';
+import 'prismjs/components/prism-makefile';
 
 const aliases: Record<string, string> = {js: 'javascript', py: 'python', sh: 'bash', shell: 'bash', rs: 'rust', m: 'matlab'};
 const cache = new Map<string, string>();

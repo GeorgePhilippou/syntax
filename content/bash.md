@@ -8,6 +8,112 @@ highlight: bash
 description: Glue for everything. Quote your variables.
 ---
 
+# Concepts
+
+## Terminal, shell and Bash
+@id concept-shell
+@kind concept
+@keywords terminal shell bash zsh what is command line prompt explain
+@diff The terminal is the window; the shell runs your commands.
+
+What the pieces are called, and why some commands differ between machines.
+
+- **Terminal**: the app with the window (Terminal, iTerm, VS Code's panel).
+- **Shell**: the program inside it that reads what you type and runs it. macOS uses **zsh** by default; Linux servers and clusters usually use **bash**. Almost everything here works in both.
+- **Command**: a program (`ls`, `python3`, `git`) followed by **options** (`-l`, `--all`) and **arguments** (file names).
+
+```bash
+echo "$SHELL"          # which shell you're using
+ls -l -a Documents     # command, options, argument
+ls -la Documents       # short options can be combined
+man ls                 # the manual page (q to quit)
+ls --help              # short help (Linux; on macOS use man)
+```
+
+macOS ships BSD versions of tools like `sed`, `date` and `find`, which differ slightly from the GNU versions on Linux. If a command works on the cluster but not on your Mac, that's usually why.
+
+## Paths explained
+@id concept-paths
+@kind concept
+@keywords path absolute relative home ~ . .. directory folder explain
+@diff / is the root, ~ is home, . is here, .. is up one.
+
+How to name a file or folder anywhere on the system.
+
+The filesystem is a tree. **Absolute** paths start at the root `/` and work from anywhere. **Relative** paths start from your **current directory** (shown by `pwd`).
+
+```bash
+/Users/george/phd/data/run1.csv   # absolute (macOS home lives under /Users)
+~/phd/data/run1.csv               # ~ means your home folder
+data/run1.csv                     # relative to where you are now
+./run.sh                          # . is the current folder
+../figures/plot.png               # .. is the parent folder
+../../                            # two levels up
+```
+@check skip
+
+- Names with spaces need quotes or a backslash: `cd "My Drive"` or `cd My\ Drive`.
+- Paths are case-sensitive on Linux; macOS usually isn't, which can hide bugs until code runs on a server.
+- Drag a file from Finder into the terminal to paste its full path.
+
+## How commands are found (PATH)
+@id concept-path-var
+@kind concept
+@keywords PATH command not found which where executable install explain
+@diff The shell searches the folders in $PATH, in order.
+
+Why you get `command not found`, and why the "wrong" Python sometimes runs.
+
+When you type `python3`, the shell looks through each folder listed in the `PATH` variable, in order, and runs the first match. A program outside those folders must be run with its path (`./myprogram`).
+
+```bash
+echo "$PATH" | tr ':' '\n'         # the folders searched, in order
+which python3                      # which one actually runs
+type -a python3                    # every match on the PATH
+export PATH="$HOME/bin:$PATH"      # add a folder (this session only)
+./my_program                       # run a program in the current folder
+```
+
+To make a `PATH` change permanent, add the `export` line to `~/.zshrc` (Mac) or `~/.bashrc` (Linux), then open a new terminal.
+
+## Input, output and pipes
+@id concept-streams
+@kind concept
+@keywords stdin stdout stderr stream pipe redirect explain
+@diff Every program has stdin, stdout and stderr.
+
+Every program gets three streams: **stdin** (input, normally the keyboard), **stdout** (normal output) and **stderr** (error messages). Both outputs go to the screen unless you redirect them.
+
+A pipe `|` connects one program's stdout to the next program's stdin, so small tools combine into bigger ones.
+
+```bash
+ls -1 data/ | wc -l                   # count the files in data/
+python3 sim.py > out.txt              # stdout to a file; errors still on screen
+python3 sim.py > out.txt 2> err.txt   # stdout and stderr to separate files
+python3 sim.py > all.txt 2>&1         # both into one file
+sort < names.txt                      # a file as stdin
+```
+
+## Exit status
+@id concept-exit
+@kind concept
+@keywords exit status code $? success failure 0 explain
+@diff 0 means success; anything else means failure.
+
+Every command finishes with a number: **0 means success**, anything else means failure. That's what `if`, `&&` and `||` check.
+
+This is the same number a C program returns from `main`, or passes to `exit()`.
+
+```bash
+ls /nonexistent
+echo $?                    # 1 (or 2): it failed
+ls ~
+echo $?                    # 0: it worked
+
+./compile.sh && ./run.sh   # run only if compiling succeeded
+grep -q "ERROR" log.txt || echo "clean run"
+```
+
 # Basics
 
 ## Script setup
@@ -877,3 +983,324 @@ echo "sqrt(2)" | bc -l              # 1.41421356…
 awk 'BEGIN { printf "%.2f\n", 7 / 3 }'   # 2.33
 echo $(( RANDOM % 6 + 1 ))          # random 1..6
 ```
+
+# Getting around
+
+## Navigating folders
+@id navigate
+@keywords cd pwd ls navigate folder directory move around change directory tab completion
+@diff pwd, ls, cd.
+
+Move around the folder tree.
+
+```bash
+pwd                  # where am I?
+ls                   # what's here?
+ls -lh               # details with human-readable sizes
+ls -lt | head        # most recently modified first
+ls -a                # include hidden files (names starting with .)
+cd phd/data          # go into a folder (relative)
+cd ..                # up one level
+cd ~                 # home (or just: cd)
+cd -                 # back to the previous folder
+open .               # macOS: open this folder in Finder
+tree -L 2            # folder tree, 2 levels (brew install tree)
+```
+
+Press **Tab** to complete file and folder names; press it twice to list the options. This saves typing and avoids typos.
+
+## Terminal shortcuts
+@id shortcuts
+@keywords keyboard shortcuts ctrl history reverse search clear cancel
+@diff Ctrl+R searches history; Ctrl+C cancels.
+
+Keys that make the terminal much faster.
+
+```text
+Ctrl+C        stop the running command
+Ctrl+D        end input / log out of a shell
+Ctrl+L        clear the screen (or: clear)
+Ctrl+R        search previous commands — type part of it, Enter to run
+↑ / ↓         step through history
+Ctrl+A / E    jump to start / end of the line
+Ctrl+U        delete everything before the cursor
+Ctrl+W        delete the previous word
+Option+click  move the cursor there (macOS Terminal)
+!!            repeat the last command (sudo !! to rerun it as admin)
+```
+
+## Looking at files
+@id view-files
+@keywords less head tail cat open view file quick look column
+@diff less for big files; head/tail for ends.
+
+Look inside files without opening an editor.
+
+```bash
+less data.csv            # scroll: space/b for pages, /word to search, q to quit
+head -n 5 data.csv       # first 5 lines
+tail -n 5 log.txt        # last 5 lines
+tail -f log.txt          # follow a growing log (Ctrl+C to stop)
+wc -l data.csv           # number of lines
+column -s, -t < data.csv | less -S   # CSV as aligned columns
+open figure.pdf          # macOS: open with the default app
+code analysis.py         # open in VS Code (if its command is installed)
+```
+
+## Disk space
+@id disk-space
+@keywords df du disk space full size folder largest files storage quota
+@diff df -h for disks, du -sh for folders.
+
+Find out what's using space.
+
+```bash
+df -h                            # free space on each disk
+du -sh ~/phd                     # total size of a folder
+du -sh * | sort -h               # size of each item here, largest last
+du -ah . | sort -h | tail -20    # the 20 largest files and folders
+find . -type f -size +500M       # files over 500 MB
+quota -s                         # your quota on many clusters
+```
+
+# Your machine
+
+## Connected USB devices
+@id devices-usb
+@keywords usb devices connected lsusb system_profiler ioreg hardware plugged in list
+@diff macOS: system_profiler SPUSBDataType; Linux: lsusb.
+
+List what's plugged into your computer.
+
+```bash
+# macOS
+system_profiler SPUSBDataType          # full USB tree with names, vendors, serials
+system_profiler SPUSBDataType | grep -E "^\s+[A-Za-z].*:$|Serial"   # just names
+ioreg -p IOUSB -l -w 0 | grep -E '"USB Product Name"|"USB Vendor Name"'
+system_profiler SPThunderboltDataType  # Thunderbolt / USB-C docks
+
+# Linux
+lsusb                                  # one line per device
+lsusb -t                               # as a tree
+sudo dmesg -w                          # live kernel log: plug a device in and watch
+```
+
+On newer macOS, `system_profiler SPUSBHostDataType` may give more detail. On an Apple Silicon Mac, **System Information → USB** shows the same thing graphically.
+
+## Serial ports and boards
+@id devices-serial
+@keywords serial port tty cu usbmodem usbserial arduino microcontroller baud screen minicom /dev
+@diff Look in /dev for tty/cu devices; connect with screen.
+
+Find which port a board (Arduino, microcontroller, instrument) is on, and talk to it.
+
+```bash
+ls /dev/cu.* /dev/tty.* 2>/dev/null     # macOS: e.g. /dev/cu.usbmodem14101
+ls /dev/ttyUSB* /dev/ttyACM* 2>/dev/null # Linux
+
+# Which one is new? List, plug the device in, then compare
+ls /dev/cu.* > before.txt
+# ...plug in...
+ls /dev/cu.* | diff before.txt -
+
+screen /dev/cu.usbmodem14101 115200     # open a terminal at 115200 baud
+# quit screen: Ctrl+A, then K, then y
+
+python3 -m serial.tools.list_ports -v   # with pyserial installed
+```
+
+On macOS, use the `cu.` device for connecting out. On Linux, if you get "permission denied", add yourself to the `dialout` group: `sudo usermod -aG dialout $USER`, then log out and back in.
+
+## Disks and drives
+@id devices-disks
+@keywords diskutil lsblk mount eject external drive usb stick sd card format volume
+@diff macOS: diskutil list; Linux: lsblk.
+
+See attached drives and safely eject them.
+
+```bash
+# macOS
+diskutil list                    # all disks and partitions
+diskutil info /Volumes/DATA      # details of one volume
+ls /Volumes                      # mounted drives
+diskutil eject /Volumes/DATA     # safely eject
+
+# Linux
+lsblk -f                         # disks, partitions, filesystems, mount points
+findmnt                          # what's mounted where
+udisksctl unmount -b /dev/sdb1   # unmount without sudo (desktop Linux)
+```
+
+Double-check the disk identifier before running any `diskutil erase…` or `dd` command — they wipe without asking.
+
+## System information
+@id system-info
+@keywords system info cpu cores memory ram os version uname sw_vers hardware specs
+@diff uname -a; sysctl (macOS); nproc/free (Linux).
+
+What machine you're on: OS version, CPU, memory.
+
+```bash
+uname -a                         # kernel and architecture (arm64 = Apple Silicon)
+sw_vers                          # macOS version
+sysctl -n machdep.cpu.brand_string   # macOS CPU name
+sysctl -n hw.ncpu                # macOS core count
+sysctl -n hw.memsize             # macOS RAM in bytes
+
+nproc                            # Linux core count
+free -h                          # Linux memory
+lscpu                            # Linux CPU details
+cat /etc/os-release              # Linux distribution
+```
+
+## Network
+@id network
+@keywords ip address ifconfig ping wifi network port lsof hostname connectivity
+@diff ipconfig getifaddr en0 (macOS); ip addr (Linux).
+
+Check addresses and connectivity.
+
+```bash
+ipconfig getifaddr en0           # macOS: your Wi-Fi IP address
+ifconfig                         # all interfaces (macOS)
+ip addr                          # all interfaces (Linux)
+ping -c 3 example.com            # is the network reachable?
+curl -I https://example.com      # does a web request work?
+lsof -i :8888                    # what's using port 8888 (e.g. Jupyter)
+hostname
+```
+
+## What's running
+@id monitor
+@keywords top htop activity cpu memory usage process kill gpu nvidia-smi monitor
+@diff top/htop; nvidia-smi for NVIDIA GPUs.
+
+See which programs are using CPU, memory or GPU.
+
+```bash
+top -o cpu                      # macOS: sort by CPU (q to quit)
+top                             # Linux (press M to sort by memory)
+htop                            # nicer, interactive (brew/apt install htop)
+ps aux | grep python            # find a process and its PID
+kill 12345                      # stop it by PID
+pkill -f "python3 train.py"     # stop by matching its command line
+nvidia-smi                      # NVIDIA GPU use (on Linux servers)
+watch -n 2 nvidia-smi           # refresh every 2 seconds
+```
+
+# Research workflows
+
+## Process every data file
+@id batch-process
+@keywords batch loop files process run program each file results folder
+@diff for f in data/*.csv; do …; done
+
+Run the same program on every file in a folder.
+
+```bash
+mkdir -p results
+for file in data/*.csv; do
+    name=$(basename "$file" .csv)               # run1.csv -> run1
+    echo "Processing $name"
+    python3 analyse.py "$file" > "results/${name}.txt" 2> "results/${name}.err" \
+        || echo "FAILED: $name" >> results/failures.log
+done
+```
+
+To run several at once on a multi-core machine: `ls data/*.csv | xargs -P 4 -I{} python3 analyse.py {}`.
+
+## Run a parameter sweep
+@id param-sweep
+@keywords parameter sweep loop values nested simulation runs arguments
+@diff Nested loops over parameter values.
+
+Run a simulation for every combination of parameters.
+
+```bash
+for temp in 280 300 320; do
+    for pressure in 1 2 5; do
+        out="runs/T${temp}_P${pressure}"
+        mkdir -p "$out"
+        ./simulate --temp "$temp" --pressure "$pressure" --out "$out" \
+            > "$out/log.txt" 2>&1
+    done
+done
+```
+
+## Keep jobs running after you disconnect
+@id long-jobs
+@keywords tmux screen nohup long running job ssh disconnect background session
+@diff tmux new -s name; detach with Ctrl+B D.
+
+Start a long run on a server, log out, and check on it later.
+
+```bash
+tmux new -s sim              # start a named session
+./long_simulation            # run your job inside it
+# detach: Ctrl+B, then D     — it keeps running after you disconnect
+tmux ls                      # list sessions
+tmux attach -t sim           # reconnect later
+
+nohup ./long_simulation > run.log 2>&1 &   # simpler: no session, just background it
+tail -f run.log
+```
+
+If your cluster uses a scheduler (Slurm, PBS), submit jobs with `sbatch`/`qsub` instead of running them on the login node.
+
+## Log a run with timestamps
+@id run-log
+@keywords log tee timestamp date record run output experiment
+@diff tee writes output to the screen and a file.
+
+Keep a record of every run's output, while still watching it.
+
+```bash
+stamp=$(date +%Y%m%d-%H%M%S)
+mkdir -p logs
+./experiment --config config.yaml 2>&1 | tee "logs/run-$stamp.log"
+echo "exit status: ${PIPESTATUS[0]}" >> "logs/run-$stamp.log"
+git rev-parse HEAD >> "logs/run-$stamp.log"   # which version of the code ran
+```
+
+`${PIPESTATUS[0]}` is the exit status of the first command in the pipeline, not `tee`'s.
+
+## Rename many files
+@id batch-rename
+@keywords rename batch files mv loop extension prefix replace spaces
+@diff Loop with mv and parameter expansion.
+
+Rename files in bulk safely.
+
+```bash
+for f in *.txt; do                       # .txt -> .csv
+    mv -n -- "$f" "${f%.txt}.csv"
+done
+
+for f in *\ *; do                        # spaces -> underscores
+    mv -n -- "$f" "${f// /_}"
+done
+
+i=1
+for f in IMG_*.jpg; do                   # numbered: sample_001.jpg ...
+    mv -n -- "$f" "$(printf 'sample_%03d.jpg' "$i")"
+    i=$((i + 1))
+done
+```
+
+`-n` refuses to overwrite existing files. Test a loop with `echo mv …` first to see what it would do.
+
+## Back up your work
+@id backup
+@keywords backup rsync external drive copy sync thesis data archive
+@diff rsync -a copies only what changed.
+
+Mirror your work to an external drive or server.
+
+```bash
+rsync -avh --progress ~/phd/ /Volumes/Backup/phd/            # copy changes only
+rsync -avh --delete ~/phd/ /Volumes/Backup/phd/              # exact mirror (deletes extras)
+rsync -avh --exclude '.venv' --exclude '*.tmp' ~/phd/ server:~/phd/
+rsync -avhn --delete ~/phd/ /Volumes/Backup/phd/             # -n: dry run, show what would happen
+```
+
+The trailing `/` on the source matters: `phd/` copies the folder's contents, `phd` copies the folder itself.

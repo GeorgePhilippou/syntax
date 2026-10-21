@@ -8,6 +8,259 @@ highlight: c
 description: Close to the machine. Clear on the details.
 ---
 
+# Concepts
+
+## Anatomy of a C program
+@id concept-program
+@kind concept
+@keywords main program structure include return 0 entry point explain
+@diff Execution starts at main; return 0 means success.
+
+What every line in the smallest C program is for.
+
+A C program is a set of functions. When you run it, the operating system calls the one named `main`. The `#include` lines at the top paste in **declarations** of library functions (here `printf`), so the compiler knows how to call them.
+
+```c
+#include <stdio.h>          // declarations for printf, fopen, ...
+
+int main(void)              // int: main gives back a number; void: takes no inputs
+{                           // the function body starts
+    printf("Hello\n");     // a statement; every statement ends with ;
+    return 0;               // hand 0 back to the OS: "finished successfully"
+}                           // the function body ends
+```
+
+- `int main(void)` — `int` is the type of value `main` returns; `(void)` means it takes no arguments.
+- `return 0;` — the exit status. `0` means success; any other number means an error. In a terminal, `echo $?` shows it after the program finishes.
+- Braces `{ }` group statements into a block; semicolons end statements.
+
+## What a function is
+@id concept-function
+@kind concept
+@keywords function parameters arguments call define explain inputs outputs
+@diff A named block with typed inputs and one typed output.
+
+A named piece of code with inputs (parameters) and one output (the return value).
+
+You **define** a function once and **call** it as often as you like. The values listed in the definition are **parameters**; the values you pass when calling are **arguments**. Each call gets fresh copies of the parameters.
+
+```c
+//  return type   name     parameters
+double            average(double a, double b)
+{
+    double sum = a + b;     // local variable: exists only during this call
+    return sum / 2.0;       // the output
+}
+
+int main(void) {
+    double m = average(3.0, 5.0);   // 3.0 and 5.0 are the arguments; m == 4.0
+    return m == 4.0 ? 0 : 1;
+}
+```
+
+Reasons to write a function: you use the same steps more than once, you want to give a chunk of logic a name, or you want to test it on its own.
+
+## What return does
+@id concept-return
+@kind concept
+@keywords return value exit function result output explain early return
+@diff return ends the function and hands back a value.
+
+`return` does two things at once: it **ends the function immediately** and **hands a value back** to whoever called it.
+
+The returned value replaces the function call in the caller's expression, so `int n = square(4);` stores `16` in `n`. Nothing after a `return` in the same path runs. A function can have several `return` statements — often an early return for errors.
+
+```c
+int square(int x) {
+    return x * x;              // the call square(4) "becomes" 16
+}
+
+int safe_divide(int a, int b, int *result) {
+    if (b == 0) {
+        return -1;             // early return: signal an error, skip the rest
+    }
+    *result = a / b;
+    return 0;                  // 0 = success, by convention
+}
+```
+@check top
+
+Printing is **not** returning: `printf` shows a value on screen but the caller gets nothing it can use. If you need the value later, return it.
+
+## What void means
+@id concept-void
+@kind concept
+@keywords void no return no parameters void pointer explain
+@diff "Nothing": no return value, or no parameters.
+
+`void` means "nothing". Where it appears tells you what's missing.
+
+- **As a return type**: the function does something but gives nothing back. Use a bare `return;` to leave early, or just reach the closing brace.
+- **In the parameter list**: `f(void)` takes no arguments at all.
+- **As `void *`**: a pointer to "some type I'm not telling you". `malloc` returns one; you assign it to a pointer of the real type.
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+void print_line(int width) {        // returns nothing
+    if (width <= 0) return;         // bare return: just leave
+    for (int i = 0; i < width; i++) putchar('-');
+    putchar('\n');
+}
+
+int read_sensor(void) {             // takes nothing
+    return 42;
+}
+
+int main(void) {
+    print_line(10);
+    int *values = malloc(10 * sizeof *values);   // void * becomes int *
+    free(values);
+    return read_sensor() == 42 ? 0 : 1;
+}
+```
+
+## Declarations and definitions
+@id concept-declaration
+@kind concept
+@keywords declaration definition prototype implicit declaration order explain
+@diff Declare before use; define exactly once.
+
+A **declaration** tells the compiler a name exists and what type it has. A **definition** provides the actual body or storage.
+
+The compiler reads a file top to bottom. If you call a function before it has seen it, it doesn't know its parameter or return types — you get "implicit declaration of function" errors. Fix it with a **prototype** (a declaration ending in `;`) near the top, or in a header file.
+
+```c
+double area(double w, double h);   // declaration (prototype): no body
+
+int main(void) {
+    return area(2, 3) == 6 ? 0 : 1;   // OK: the compiler knows area's types
+}
+
+double area(double w, double h) {  // definition: the body
+    return w * h;
+}
+```
+
+You may declare something many times, but define it exactly **once** in the whole program.
+
+## Header files explained
+@id concept-headers
+@kind concept
+@keywords header .h file include guard why declarations multiple files explain
+@diff .h holds declarations; .c holds definitions.
+
+Headers let several `.c` files share the same declarations.
+
+Put the **declarations** (prototypes, `struct` definitions, constants) in `name.h`, and the **definitions** (function bodies) in `name.c`. Any file that wants to use them writes `#include "name.h"`. `#include` literally pastes the header's text in place, so the include guard (`#ifndef … #endif`) stops it being pasted twice.
+
+```c stats.h
+#ifndef STATS_H
+#define STATS_H
+
+#include <stddef.h>
+
+double mean(const double *values, size_t n);
+double maximum(const double *values, size_t n);
+
+#endif
+```
+
+```c stats.c
+#include "stats.h"
+
+double mean(const double *values, size_t n) {
+    double sum = 0;
+    for (size_t i = 0; i < n; i++) sum += values[i];
+    return n ? sum / n : 0;
+}
+
+double maximum(const double *values, size_t n) {
+    double best = values[0];
+    for (size_t i = 1; i < n; i++) if (values[i] > best) best = values[i];
+    return best;
+}
+```
+
+```c main.c
+#include <stdio.h>
+#include "stats.h"
+
+int main(void) {
+    double data[] = {2.0, 4.0, 9.0};
+    printf("mean %.2f, max %.2f\n", mean(data, 3), maximum(data, 3));
+    return 0;
+}
+```
+
+Compile both `.c` files together: `cc main.c stats.c -o app`. Use `"quotes"` for your own headers and `<angle brackets>` for system ones.
+
+## Compiling and linking
+@id concept-compile
+@kind concept
+@keywords compile link object file undefined reference preprocessor build steps explain
+@diff Preprocess → compile each .c → link into one program.
+
+What happens when you run `cc`, and what the classic errors mean.
+
+1. **Preprocess**: `#include` and `#define` are expanded as text.
+2. **Compile**: each `.c` file becomes an object file (`.o`) on its own. Errors here are about syntax and types in *that* file.
+3. **Link**: the object files and libraries are joined into one executable. Errors here are about something declared but never defined.
+
+```bash
+cc -c stats.c -o stats.o        # compile only
+cc -c main.c  -o main.o
+cc main.o stats.o -lm -o app    # link (and add the math library)
+./app
+```
+
+- `implicit declaration of function 'foo'` → missing `#include` or prototype (compile step).
+- `undefined reference to 'foo'` / `Undefined symbols … "_foo"` → declared but its `.c` file or library wasn't linked (link step).
+- `multiple definition of 'foo'` → a function or variable *defined* in a header that's included twice. Headers should only declare.
+
+## What a pointer is
+@id concept-pointer
+@kind concept
+@keywords pointer address memory explain why use pointers
+@diff A variable that stores another variable's address.
+
+A pointer is a variable whose value is the **memory address** of another variable.
+
+Every variable lives somewhere in memory. `&x` gives that location; a pointer stores it; `*p` follows it back to the value. Pointers let a function modify the caller's variables, let you pass large data without copying it, and are how arrays and dynamic memory work.
+
+```c
+int x = 10;
+int *p = &x;          // p holds the address of x
+printf("%d\n", *p);   // 10: follow the address
+*p = 20;              // changes x itself
+printf("%d\n", x);    // 20
+printf("%p\n", (void *)p);  // the address, e.g. 0x7ffd5c3a1b2c
+```
+
+Read `int *p` as "p is a pointer to an int". The `*` in a declaration means "pointer"; in an expression it means "follow the pointer".
+
+## Common runtime errors
+@id concept-crashes
+@kind concept
+@keywords segmentation fault segfault crash bus error abort debug explain
+@diff Segfaults usually mean a bad pointer or array index.
+
+What "Segmentation fault" and friends usually mean.
+
+- **Segmentation fault**: the program touched memory it doesn't own — an array index past the end, a `NULL` or uninitialised pointer, or memory already `free`d.
+- **Garbage values**: reading a variable you never initialised.
+- **Abort / assertion failed**: an `assert` failed, or `free` was called twice.
+
+The fastest way to find these is to rebuild with the sanitiser, which stops at the exact line:
+
+```bash
+cc -g -fsanitize=address,undefined main.c -o app
+./app
+```
+
+Or run under a debugger: `lldb ./app` (macOS) or `gdb ./app` (Linux), then `run`, and `bt` after the crash for the call stack.
+
 # Basics
 
 ## Variables
@@ -851,17 +1104,24 @@ double read_sensor(int id);
 #endif
 ```
 
+```c sensor.c
+#include "sensor.h"
+
+double read_sensor(int id) {
+    return id * 1.5;
+}
+```
+
 ```c main.c
 #include <stdio.h>   // system header
 #include <math.h>
 #include "sensor.h"  // your header
 
 int main(void) {
-    printf("%f\n", sqrt(2.0));
+    printf("%f %f\n", sqrt(2.0), read_sensor(2));
     return 0;
 }
 ```
-@check skip
 
 Compile together: `cc main.c sensor.c -lm -o app`. On Linux, math functions need `-lm`.
 
@@ -945,3 +1205,222 @@ int main(void) {
 ```
 
 There's no portable sleep in standard C: use `sleep()`/`usleep()` from `unistd.h` on macOS/Linux.
+
+# Projects
+
+## Multi-file project with make
+@id project-makefile
+@keywords makefile make build project layout src include multiple files compile
+@diff A Makefile rebuilds only what changed.
+
+A tidy layout for a C project, and a Makefile so you just type `make`.
+
+```text layout
+my_project/
+├── Makefile
+├── include/
+│   └── sensor.h
+└── src/
+    ├── main.c
+    └── sensor.c
+```
+
+```makefile Makefile
+CC      = cc
+CFLAGS  = -std=c17 -Wall -Wextra -g -Iinclude
+LDLIBS  = -lm
+SRC     = $(wildcard src/*.c)
+OBJ     = $(SRC:src/%.c=build/%.o)
+
+app: $(OBJ)
+	$(CC) $(OBJ) $(LDLIBS) -o $@
+
+build/%.o: src/%.c include/*.h
+	@mkdir -p build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -rf build app
+
+.PHONY: clean
+```
+
+Run `make` to build, `make clean` to start fresh. Recipe lines in a Makefile **must** start with a tab, not spaces — the classic error is `missing separator`. `$@` is the target, `$<` the first prerequisite.
+
+## Designing a function
+@id function-design
+@keywords function design array length const size_t documentation return code error
+@diff Pass arrays with their length; return status, write results via pointers.
+
+A pattern for functions that work on arrays and can fail.
+
+```c stats.h
+#ifndef STATS_H
+#define STATS_H
+
+#include <stddef.h>
+
+/* Mean and standard deviation of n values.
+   Returns 0 on success, -1 if n < 2. Results are written to *mean and *sd. */
+int mean_sd(const double *values, size_t n, double *mean, double *sd);
+
+#endif
+```
+
+```c stats.c
+#include <math.h>
+#include "stats.h"
+
+int mean_sd(const double *values, size_t n, double *mean, double *sd) {
+    if (n < 2) return -1;
+    double sum = 0;
+    for (size_t i = 0; i < n; i++) sum += values[i];
+    *mean = sum / n;
+    double sq = 0;
+    for (size_t i = 0; i < n; i++) sq += (values[i] - *mean) * (values[i] - *mean);
+    *sd = sqrt(sq / (n - 1));
+    return 0;
+}
+```
+
+```c main.c
+#include <stdio.h>
+#include "stats.h"
+
+int main(void) {
+    double readings[] = {9.8, 10.1, 10.0, 9.9};
+    double m, s;
+    if (mean_sd(readings, 4, &m, &s) != 0) {
+        fprintf(stderr, "not enough data\n");
+        return 1;
+    }
+    printf("%.3f ± %.3f\n", m, s);
+    return 0;
+}
+```
+
+- `const double *values` promises the function won't modify the data.
+- The length travels with the array, because a function can't find out an array's size from a pointer.
+- The return value reports success; results come back through pointer parameters.
+
+## Reading numeric data
+@id read-data
+@keywords fscanf read numbers columns data file csv parse load arrays
+@diff fscanf in a loop until it stops matching.
+
+Load two columns of numbers (e.g. time and voltage) from a text file.
+
+```c
+#include <stdio.h>
+
+#define MAX_ROWS 10000
+
+int main(void) {
+    FILE *f = fopen("measurements.txt", "r");
+    if (!f) { perror("measurements.txt"); return 1; }
+
+    static double t[MAX_ROWS], v[MAX_ROWS];
+    size_t n = 0;
+    char header[256];
+    fgets(header, sizeof header, f);              // skip a header line
+
+    while (n < MAX_ROWS && fscanf(f, "%lf,%lf", &t[n], &v[n]) == 2) {
+        n++;
+    }
+    fclose(f);
+    printf("read %zu rows\n", n);
+    return 0;
+}
+```
+
+`fscanf` returns how many values it matched; stop when it's not 2. Use `"%lf %lf"` for space-separated files. `%lf` (not `%f`) reads a `double`.
+
+## Writing a CSV
+@id write-csv
+@keywords csv write results export fprintf columns header data file
+@diff fprintf rows with commas.
+
+Save results so Python, MATLAB or Excel can read them.
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    FILE *out = fopen("results.csv", "w");
+    if (!out) { perror("results.csv"); return 1; }
+    fprintf(out, "step,time_s,value\n");
+    for (int i = 0; i < 5; i++) {
+        double t = i * 0.1;
+        fprintf(out, "%d,%.3f,%.6e\n", i, t, t * t);
+    }
+    return fclose(out) == 0 ? 0 : 1;
+}
+```
+
+Then in Python: `pandas.read_csv("results.csv")`; in MATLAB: `readtable("results.csv")`.
+
+## Structs and functions
+@id struct-functions
+@keywords struct pass pointer function config parameters const
+@diff Pass structs by pointer; const for read-only.
+
+Group parameters into a struct and pass it to functions.
+
+```c
+#include <stdio.h>
+
+typedef struct {
+    double gain;
+    double offset;
+    int samples;
+} Config;
+
+double calibrate(const Config *cfg, double raw) {   // read-only access
+    return cfg->gain * raw + cfg->offset;
+}
+
+void set_defaults(Config *cfg) {                     // modifies the caller's struct
+    cfg->gain = 1.0;
+    cfg->offset = 0.0;
+    cfg->samples = 100;
+}
+
+int main(void) {
+    Config cfg;
+    set_defaults(&cfg);
+    cfg.gain = 2.5;
+    printf("%.2f\n", calibrate(&cfg, 4.0));   // 10.00
+    return 0;
+}
+```
+
+Passing a pointer avoids copying the whole struct, and lets the function change it. Add `const` when it shouldn't.
+
+## Timing your code
+@id benchmark
+@keywords timing benchmark performance clock_gettime speed profile
+@diff clock_gettime(CLOCK_MONOTONIC) for wall time.
+
+Measure how long a section takes, accurately.
+
+```c
+#define _POSIX_C_SOURCE 199309L   // expose POSIX functions under -std=c17
+#include <stdio.h>
+#include <time.h>
+
+static double now(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts.tv_sec + ts.tv_nsec * 1e-9;
+}
+
+int main(void) {
+    double start = now();
+    volatile double x = 0;
+    for (long i = 0; i < 100000000; i++) x += 1e-9;
+    printf("%.3f s\n", now() - start);
+    return 0;
+}
+```
+
+`clock_gettime` is POSIX, not standard C: with `-std=c17` on Linux you need the `_POSIX_C_SOURCE` line before any include (or compile with `-std=gnu17`). Compile with `-O2` when timing — debug builds are much slower.

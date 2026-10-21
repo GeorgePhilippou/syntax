@@ -3,7 +3,7 @@
 // toolchain is missing instead of skipping that language.
 import assert from 'node:assert/strict';
 import {spawn, spawnSync} from 'node:child_process';
-import {mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync} from 'node:fs';
+import {mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync} from 'node:fs';
 import {cpus, tmpdir} from 'node:os';
 import {basename, join} from 'node:path';
 import {parseLanguage, codeBlocks} from '../src/content/parse.ts';
@@ -24,9 +24,11 @@ function available(command, args = ['--version']) {
 // Wraps a snippet according to its check mode and returns [extension, source].
 function cFamily(code, mode, cpp) {
   const lines = code.split('\n');
+  // Feature-test macros must come before every #include, including ours.
+  const features = lines.filter(l => /^#define _\w+_SOURCE\b/.test(l)).join('\n');
   const includes = lines.filter(l => l.startsWith('#include')).join('\n');
-  const body = lines.filter(l => !l.startsWith('#include')).join('\n');
-  const prelude = (cpp ? cppHeaders : cHeaders).map(h => `#include <${h}>`).join('\n') + '\n' + includes + '\n';
+  const body = lines.filter(l => !l.startsWith('#include') && !/^#define _\w+_SOURCE\b/.test(l)).join('\n');
+  const prelude = features + '\n' + (cpp ? cppHeaders : cHeaders).map(h => `#include <${h}>`).join('\n') + '\n' + includes + '\n';
   const main = cpp ? 'int main()' : 'int main(void)';
   if (mode === 'auto') mode = /\bmain\s*\(/.test(body) ? 'program' : 'body';
   if (mode === 'program') return prelude + body;
@@ -91,8 +93,22 @@ try {
       assert(card.summary, `${language.id}/${card.id}: summary`);
       assert(codeBlocks(card).length > 0, `${language.id}/${card.id}: needs at least one code block`);
       if (!ready || card.check === 'skip') continue;
+      // Blocks captioned with C/C++ file names form a small project: write
+      // them side by side and compile each source file against the headers.
+      const projectFile = /^[\w./-]+\.(c|h|cpp|hpp)$/;
+      const project = codeBlocks(card).filter(b => b.lang === language.highlight && projectFile.test(b.caption));
+      if (project.length && (language.id === 'c' || language.id === 'cpp')) {
+        const dir = join(temp, `${language.id}-${card.id}`);
+        mkdirSync(dir);
+        for (const block of project) writeFileSync(join(dir, block.caption), block.code);
+        for (const block of project.filter(b => /\.(c|cpp)$/.test(b.caption))) {
+          const [command, args] = checker.run(join(dir, block.caption));
+          tasks.push(async () => ({label: `${language.name} › ${card.title} (${block.caption})`, ...(await exec(command, [...args, '-I', dir]))}));
+        }
+      }
       codeBlocks(card).forEach((block, index) => {
         if (block.lang !== language.highlight) return; // e.g. shell commands inside a Rust card
+        if (project.includes(block)) return;
         const [extension, source] = checker.build(block.code, card.check);
         const file = join(temp, `${language.id}-${card.id}-${index}.${extension}`);
         writeFileSync(file, source);

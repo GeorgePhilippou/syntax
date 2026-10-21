@@ -15,6 +15,7 @@
 //   @keywords extra search words
 //   @diff One line shown in the compare view.
 //   @check program | body | top | skip
+//   @kind concept               (an explainer: the text comes first and is always shown)
 //
 //   First paragraph is the summary.
 //
@@ -25,6 +26,7 @@
 //   Anything else is notes (Markdown subset: `code`, **bold**, - lists).
 
 export type CheckMode = 'auto' | 'program' | 'body' | 'top' | 'skip';
+export type CardKind = 'reference' | 'concept';
 
 export type CodeBlock = {kind: 'code'; lang: string; caption: string; code: string};
 export type TextBlock = {kind: 'text'; text: string};
@@ -39,6 +41,7 @@ export type Card = {
   keywords: string;
   diff: string;
   check: CheckMode;
+  kind: CardKind;
   blocks: Block[];
 };
 
@@ -128,7 +131,7 @@ export function parseLanguage(id: string, source: string): Language {
       } else {
         card = {
           id: slugify(heading[2]), language: id, title: heading[2], category,
-          summary: '', keywords: '', diff: '', check: defaultCheck, blocks: [],
+          summary: '', keywords: '', diff: '', check: defaultCheck, kind: 'reference', blocks: [],
         };
         if (!language.categories.includes(category)) language.categories.push(category);
       }
@@ -142,7 +145,10 @@ export function parseLanguage(id: string, source: string): Language {
       if (key === 'id') card.id = value.trim();
       else if (key === 'keywords') card.keywords = value.trim();
       else if (key === 'diff') card.diff = value.trim();
-      else if (key === 'check') {
+      else if (key === 'kind') {
+        if (value.trim() !== 'concept' && value.trim() !== 'reference') throw new Error(`${id}/${card.id}: unknown kind "${value}"`);
+        card.kind = value.trim() as CardKind;
+      } else if (key === 'check') {
         if (!checkModes.includes(value.trim() as CheckMode)) throw new Error(`${id}/${card.id}: unknown check "${value}"`);
         card.check = value.trim() as CheckMode;
       } else throw new Error(`${id}/${card.id}: unknown directive @${key}`);

@@ -293,6 +293,15 @@ h1 { margin: 0; font-size: 2rem; letter-spacing: -0.03em; line-height: 1.1; }
 .card-actions .icon-button { opacity: 0.55; }
 .card:hover .card-actions .icon-button, .card-actions .icon-button:focus-visible, .card-actions .icon-button.active { opacity: 1; }
 
+.concept-badge {
+  display: inline-block; margin-right: 8px;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; vertical-align: 2px;
+  padding: 1px 7px; border-radius: 6px;
+  color: var(--paper); background: var(--ink);
+}
+.card.concept .notes { color: var(--ink); font-size: 0.93em; }
+.card.concept .notes p:first-child { margin-top: 0; }
+
 .lang-badge {
   display: inline-block; margin-right: 8px;
   font-size: 0.7rem; font-weight: 700; vertical-align: 2px;

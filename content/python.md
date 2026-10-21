@@ -8,6 +8,182 @@ highlight: python
 description: Readable by design. Powerful by nature.
 ---
 
+# Concepts
+
+## How Python runs your code
+@id concept-program
+@kind concept
+@keywords script interpreter run python file main entry point explain
+@diff Runs top to bottom; no main required.
+
+Python reads a file from top to bottom and runs each statement as it goes.
+
+There's no compile step and no required `main` function: `python3 analysis.py` just executes the file. Definitions (`def`, `class`, `import`) are statements too — they create names when they run, which is why you must define a function before the line that calls it.
+
+```python
+import math                      # runs first: loads the math module
+
+def area(radius):                # creates the function (doesn't run its body)
+    return math.pi * radius ** 2
+
+print(area(2.0))                 # now the body runs
+
+if __name__ == "__main__":       # True only when this file is run directly,
+    print("run as a script")     # not when another file imports it
+```
+
+## What a function is
+@id concept-function
+@kind concept
+@keywords function def parameters arguments call explain
+@diff def name(params): an indented body; return gives the result.
+
+A named, reusable block of code with inputs and an output.
+
+The names in the `def` line are **parameters**; the values you pass in a call are **arguments**. Each call runs the body from the top with fresh local variables, which disappear when the call ends.
+
+```python
+def kinetic_energy(mass, velocity):      # parameters
+    """Return kinetic energy in joules."""
+    return 0.5 * mass * velocity ** 2
+
+e1 = kinetic_energy(2.0, 3.0)            # arguments: 2.0 and 3.0 -> 9.0
+e2 = kinetic_energy(mass=1.0, velocity=10.0)   # keyword arguments
+```
+
+## What return does
+@id concept-return
+@kind concept
+@keywords return value print vs return None output result explain
+@diff return hands a value back; print only displays it.
+
+`return` ends the function and hands a value back to the caller. That value replaces the call, so you can store it or use it in more calculations.
+
+The most common beginner mix-up is `print` versus `return`. `print` shows something on screen, but the caller gets nothing. A function without a `return` gives back `None`.
+
+```python
+def double_print(x):
+    print(x * 2)          # shows 8 on screen…
+
+def double_return(x):
+    return x * 2          # …this hands 8 back
+
+a = double_print(4)       # prints 8, but a is None
+b = double_return(4)      # b is 8
+total = double_return(4) + 1   # 9 — returned values can be used
+
+def first_negative(values):
+    for v in values:
+        if v < 0:
+            return v      # leaves immediately, mid-loop
+    return None           # explicit "nothing found"
+```
+
+## None
+@id concept-none
+@kind concept
+@keywords None null nothing missing NoneType explain
+@diff Python's "no value"; test with is None.
+
+`None` is Python's value for "nothing here" — like `void`/`NULL` in C.
+
+It's what functions return without a `return`, the usual default for optional parameters, and a placeholder for "not computed yet". There's only one `None`, so compare with `is`.
+
+```python
+result = None
+if result is None:
+    result = 42
+
+def find(items, target):
+    for i, item in enumerate(items):
+        if item == target:
+            return i
+    return None
+
+index = find([3, 5], 9)
+if index is not None:      # not "if index:" — 0 is a valid index but falsy
+    print(index)
+```
+
+`AttributeError: 'NoneType' object has no attribute ...` almost always means a function returned `None` when you expected a value.
+
+## Names and objects
+@id concept-references
+@kind concept
+@keywords variables references mutable immutable copy aliasing list explain
+@diff Names point to objects; assignment never copies.
+
+A variable is a **name tag on an object**, not a box containing a value. Assignment attaches another tag; it never copies.
+
+This only matters for **mutable** objects (lists, dicts, NumPy arrays): changing the object through one name is visible through every other name. Numbers, strings and tuples are **immutable**, so they can't be changed in place.
+
+```python
+a = [1, 2, 3]
+b = a              # same list, two names
+b.append(4)
+print(a)           # [1, 2, 3, 4]
+
+c = a.copy()       # a new list
+c.append(5)        # a is unchanged
+
+import copy
+nested = [[1], [2]]
+deep = copy.deepcopy(nested)   # copies inner lists too
+
+import numpy as np
+x = np.zeros(3)
+view = x[:2]       # NumPy slices are views, not copies
+view[0] = 9        # x[0] is now 9 too
+```
+
+The same applies to function arguments: a function that modifies a list you passed in changes your list.
+
+## Methods and objects
+@id concept-objects
+@kind concept
+@keywords object method attribute dot class instance explain
+@diff value.method() calls a function attached to the value.
+
+Everything in Python is an object, and objects carry their own functions, called **methods**.
+
+`text.upper()` calls the `upper` method of the string `text`. The dot reaches inside an object: `obj.attribute` is data, `obj.method()` is a call. Use `dir(obj)` to list what an object has and `help(obj.method)` to read the docs.
+
+```python
+text = "voltage"
+text.upper()             # method call -> 'VOLTAGE'
+
+import numpy as np
+data = np.array([1.0, 2.0, 3.0])
+data.shape               # attribute (no parentheses) -> (3,)
+data.mean()              # method -> 2.0
+
+print(type(data))        # <class 'numpy.ndarray'>
+print([name for name in dir(data) if not name.startswith("_")][:5])
+```
+
+## Reading a traceback
+@id concept-traceback
+@kind concept
+@keywords traceback error stack trace debug exception read explain
+@diff Read from the bottom up.
+
+When Python crashes it prints a **traceback**. Read it from the **bottom up**.
+
+The last line is the error type and message. The lines above show the chain of calls that led there, ending with the exact line in your file. Library lines (paths into `site-packages`) usually just mean you passed in a bad value.
+
+```text
+Traceback (most recent call last):
+  File "analysis.py", line 12, in <module>
+    result = normalise(data)
+  File "analysis.py", line 5, in normalise
+    return values / values.max()
+AttributeError: 'list' object has no attribute 'max'
+```
+
+Here: line 5 called `.max()` on a list. Fix it with `np.array(values)`, or `max(values)`.
+
+To inspect at the point of failure, run `python3 -m pdb analysis.py`, or put `breakpoint()` on the line before.
+
 # Basics
 
 ## Variables
@@ -1275,6 +1451,362 @@ def timer(label):
 with timer("work"):
     sum(range(1_000_000))
 ```
+
+# Plotting
+
+## Line plot
+@id plot
+@keywords matplotlib plot line figure xlabel ylabel title show
+@diff fig, ax = plt.subplots(); ax.plot(x, y)
+
+The basic matplotlib pattern: create a figure and axes, plot, label.
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+t = np.linspace(0, 2, 200)
+signal = np.sin(2 * np.pi * 3 * t) * np.exp(-t)
+
+fig, ax = plt.subplots()
+ax.plot(t, signal)
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Amplitude (V)")
+ax.set_title("Damped oscillation")
+ax.grid(True, alpha=0.3)
+plt.show()
+```
+
+Use `fig, ax = plt.subplots()` and call methods on `ax`. It scales to multi-panel figures, unlike the `plt.plot(...)` shortcut.
+
+## Several lines and a legend
+@id plot-multiple
+@keywords legend label color linestyle marker multiple lines
+@diff label= on each line, then ax.legend().
+
+Overlay data series and tell them apart.
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(0, 10, 50)
+fig, ax = plt.subplots()
+ax.plot(x, np.sqrt(x), label="model", color="black", linewidth=2)
+ax.plot(x, np.sqrt(x) + np.random.normal(0, 0.1, x.size), "o", label="measured", markersize=4)
+ax.plot(x, 0.8 * np.sqrt(x), "--", label="lower bound", color="tab:red")
+ax.legend(frameon=False)
+ax.set_xlim(0, 10)
+plt.show()
+```
+
+Format strings: colour `b g r k`, marker `o s ^ x .`, line `- -- : -.` (e.g. `"r--"`, `"ko"`).
+
+## Subplots
+@id subplot
+@keywords subplots grid multiple panels sharex tight_layout constrained
+@diff plt.subplots(rows, cols) returns an array of axes.
+
+Several panels in one figure.
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+t = np.linspace(0, 1, 500)
+fig, axes = plt.subplots(2, 2, figsize=(8, 6), sharex=True, layout="constrained")
+axes[0, 0].plot(t, np.sin(10 * t))
+axes[0, 0].set_title("(a) sine")
+axes[0, 1].plot(t, np.cos(10 * t), color="tab:orange")
+axes[1, 0].plot(t, t ** 2)
+axes[1, 1].plot(t, np.exp(-5 * t))
+for ax in axes.flat:
+    ax.grid(alpha=0.3)
+for ax in axes[1, :]:
+    ax.set_xlabel("Time (s)")
+plt.show()
+```
+
+`layout="constrained"` stops labels overlapping (older versions: `fig.tight_layout()`).
+
+## Scatter and error bars
+@id plot-scatter
+@keywords scatter errorbar error bars uncertainty colour map points
+@diff ax.errorbar(x, y, yerr=...) for uncertainties.
+
+Points with uncertainties, or coloured by a third variable.
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.arange(1, 8)
+y = 2 * x + np.random.normal(0, 1, x.size)
+err = np.full(x.size, 0.8)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
+ax1.errorbar(x, y, yerr=err, fmt="o", capsize=3, label="data")
+ax1.plot(x, 2 * x, "k--", label="fit")
+ax1.legend()
+
+px, py = np.random.rand(2, 200)
+points = ax2.scatter(px, py, c=px + py, cmap="viridis", s=15)
+fig.colorbar(points, ax=ax2, label="x + y")
+plt.show()
+```
+
+## Histograms
+@id plot-hist
+@keywords histogram distribution bins density hist
+@diff ax.hist(data, bins=...)
+
+Show the distribution of values.
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+samples = np.random.normal(5.0, 1.2, 2000)
+fig, ax = plt.subplots()
+ax.hist(samples, bins=40, density=True, alpha=0.6, edgecolor="white", label="samples")
+ax.axvline(samples.mean(), color="k", linestyle="--", label=f"mean = {samples.mean():.2f}")
+ax.set_xlabel("Value")
+ax.set_ylabel("Probability density")
+ax.legend()
+plt.show()
+```
+
+## Heatmaps and images
+@id plot-heatmap
+@keywords imshow pcolormesh heatmap colorbar matrix 2d image contour
+@diff imshow for images; pcolormesh for x/y grids.
+
+Plot 2D data with a colour bar.
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(-2, 2, 200)
+y = np.linspace(-1, 1, 100)
+X, Y = np.meshgrid(x, y)
+Z = np.exp(-(X ** 2 + 3 * Y ** 2))
+
+fig, ax = plt.subplots()
+mesh = ax.pcolormesh(X, Y, Z, cmap="magma", shading="auto")
+ax.contour(X, Y, Z, levels=5, colors="white", linewidths=0.5)
+fig.colorbar(mesh, ax=ax, label="Intensity")
+ax.set_aspect("equal")
+plt.show()
+
+# For a plain matrix/image: ax.imshow(matrix, origin="lower", cmap="gray")
+```
+
+Perceptually uniform colour maps (`viridis`, `magma`, `cividis`) read correctly in greyscale and for colour-blind readers.
+
+## Log scales and twin axes
+@id plot-log
+@keywords log scale semilogy loglog twinx second y axis
+@diff ax.set_yscale("log"); ax.twinx() for a second y-axis.
+
+Logarithmic axes, and two quantities on one plot.
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+f = np.logspace(1, 5, 200)                 # 10 Hz to 100 kHz
+gain = 1 / np.sqrt(1 + (f / 1e3) ** 2)
+phase = -np.degrees(np.arctan(f / 1e3))
+
+fig, ax = plt.subplots()
+ax.semilogx(f, 20 * np.log10(gain), color="tab:blue")
+ax.set_xlabel("Frequency (Hz)")
+ax.set_ylabel("Gain (dB)", color="tab:blue")
+
+ax2 = ax.twinx()                           # shares the x-axis
+ax2.semilogx(f, phase, color="tab:red")
+ax2.set_ylabel("Phase (°)", color="tab:red")
+plt.show()
+```
+
+## Figures for papers
+@id plot-save
+@keywords savefig pdf png dpi publication figure size rcParams font thesis paper
+@diff Set size in inches, save as PDF/SVG for vector output.
+
+Consistent, publication-ready figures.
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+plt.rcParams.update({
+    "font.size": 9,
+    "axes.labelsize": 9,
+    "legend.fontsize": 8,
+    "figure.dpi": 150,
+    "savefig.bbox": "tight",
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+})
+
+fig, ax = plt.subplots(figsize=(3.4, 2.4))   # inches: one journal column
+x = np.linspace(0, 1, 100)
+ax.plot(x, x ** 2)
+ax.set_xlabel(r"Strain $\varepsilon$")        # LaTeX-style maths in labels
+ax.set_ylabel(r"Stress $\sigma$ (MPa)")
+fig.savefig("figure1.pdf")                     # vector: sharp at any zoom
+fig.savefig("figure1.png", dpi=300)            # raster for slides
+```
+
+Make the figure the size it will be printed, so the fonts come out the size you set. Put the `rcParams` block in a shared `style.py` and import it in every plotting script.
+
+## Plotting from a CSV
+@id plot-csv
+@keywords pandas csv plot dataframe columns read plot data file
+@diff pd.read_csv then ax.plot(df["col"], ...)
+
+Load data with pandas and plot its columns.
+
+```python
+import matplotlib.pyplot as plt
+import pandas as pd
+
+df = pd.read_csv("results.csv")              # header row becomes column names
+fig, ax = plt.subplots()
+ax.plot(df["time_s"], df["value"], label="value")
+ax.set_xlabel("Time (s)")
+ax.legend()
+
+for name, group in df.groupby("sample"):     # one line per sample
+    ax.plot(group["time_s"], group["value"], label=str(name))
+plt.show()
+```
+
+# Data analysis
+
+## pandas basics
+@id pandas
+@keywords pandas dataframe read_csv head describe columns select rows
+@diff DataFrame: labelled columns, like a spreadsheet.
+
+Load a table and look around.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("results.csv")
+df.head()                 # first 5 rows
+df.shape                  # (rows, columns)
+df.columns                # column names
+df.describe()             # count, mean, std, min, quartiles, max
+df.info()                 # types and missing values
+
+df["value"]               # one column (a Series)
+df[["time_s", "value"]]   # several columns
+df.iloc[0]                # first row by position
+df.loc[df["value"] > 1]   # rows by condition
+df["power"] = df["value"] ** 2      # new column
+df.to_csv("out.csv", index=False)
+```
+
+Pass `sep="\t"`, `skiprows=2` or `names=[...]` to `read_csv` for awkward files.
+
+## Filtering and grouping
+@id pandas-group
+@keywords groupby filter query mean aggregate summary sort pandas
+@diff df.groupby("col").agg(...)
+
+Summarise data by category.
+
+```python
+import pandas as pd
+
+df = pd.read_csv("results.csv")
+hot = df[(df["temp"] > 30) & (df["valid"])]       # use & and | with parentheses
+summary = df.groupby("sample")["value"].agg(["mean", "std", "count"])
+per_day = df.groupby("day").agg(mean_temp=("temp", "mean"), runs=("run", "nunique"))
+ranked = df.sort_values("value", ascending=False).head(10)
+clean = df.dropna(subset=["value"])               # drop rows with missing values
+```
+
+## Loading and saving arrays
+@id numpy-io
+@keywords numpy loadtxt savetxt genfromtxt np.save np.load npz binary text
+@diff np.loadtxt for text; np.save/np.load for speed.
+
+Read numeric text files and save arrays.
+
+```python
+import numpy as np
+
+data = np.loadtxt("measurements.txt", delimiter=",", skiprows=1)
+t, v = data[:, 0], data[:, 1]                 # columns
+t, v = np.loadtxt("measurements.txt", delimiter=",", skiprows=1, unpack=True)
+
+np.savetxt("out.csv", np.column_stack([t, v]), delimiter=",",
+           header="t,v", comments="", fmt="%.6g")
+
+np.save("signal.npy", v)                      # fast binary, exact
+v2 = np.load("signal.npy")
+np.savez("run1.npz", time=t, voltage=v)       # several named arrays
+run = np.load("run1.npz")
+run["voltage"]
+```
+
+Use `np.genfromtxt` when some values are missing (they become `nan`).
+
+## Curve fitting
+@id curve-fit
+@keywords curve_fit scipy fit model parameters least squares regression polyfit
+@diff scipy.optimize.curve_fit(model, x, y, p0=...)
+
+Fit a model to data and get parameter uncertainties.
+
+```python
+import numpy as np
+from scipy.optimize import curve_fit
+
+def model(t, amplitude, tau, offset):
+    return amplitude * np.exp(-t / tau) + offset
+
+t = np.linspace(0, 5, 50)
+y = model(t, 2.0, 1.3, 0.1) + np.random.normal(0, 0.05, t.size)
+
+params, cov = curve_fit(model, t, y, p0=[1, 1, 0])   # p0 = initial guess
+errors = np.sqrt(np.diag(cov))
+for name, value, err in zip(["A", "tau", "c"], params, errors):
+    print(f"{name} = {value:.3f} ± {err:.3f}")
+
+slope, intercept = np.polyfit(t, y, 1)               # straight-line fit
+```
+
+A good `p0` matters: with a bad guess the fit can fail or find a wrong local minimum.
+
+## Statistics
+@id stats
+@keywords mean std standard deviation error median percentile ttest scipy stats
+@diff np.mean/np.std (ddof=1 for sample std).
+
+Summary statistics and a quick significance test.
+
+```python
+import numpy as np
+from scipy import stats
+
+x = np.array([9.8, 10.1, 10.0, 9.9, 10.3])
+np.mean(x), np.median(x)
+sd = np.std(x, ddof=1)               # sample standard deviation
+sem = sd / np.sqrt(x.size)           # standard error of the mean
+np.percentile(x, [25, 75])
+
+y = np.array([10.4, 10.6, 10.2, 10.5, 10.7])
+t_stat, p_value = stats.ttest_ind(x, y)
+r, p = stats.pearsonr(x, y)
+```
+
+`np.std` defaults to `ddof=0` (population). For measured samples you usually want `ddof=1`, which is what MATLAB's `std` uses.
 
 # NumPy
 

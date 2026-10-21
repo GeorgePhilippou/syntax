@@ -39,12 +39,13 @@ export function CardView({card, showLanguage, highlighted, terms, saved, note, s
   return (
     <article
       id={`card-${card.language}-${card.id}`}
-      className={`card${highlighted ? ' highlighted' : ''}`}
+      className={`card${card.kind === 'concept' ? ' concept' : ''}${highlighted ? ' highlighted' : ''}`}
       style={{'--lang': language.color} as CSSProperties}
     >
       <header className="card-head">
         <h3>
           {showLanguage && <span className="lang-badge">{language.name}</span>}
+          {card.kind === 'concept' && <span className="concept-badge">Explainer</span>}
           <a href={href} dangerouslySetInnerHTML={{__html: markTerms(card.title, terms)}} />
         </h3>
         <div className="card-actions">
@@ -68,7 +69,7 @@ export function CardView({card, showLanguage, highlighted, terms, saved, note, s
       {card.blocks.map((block, i) =>
         block.kind === 'code'
           ? <CodeBlock key={i} block={block} onCopied={onStatus} />
-          : showNotes && <div key={i} className="notes" dangerouslySetInnerHTML={{__html: renderMarkdown(block.text)}} />,
+          : (showNotes || card.kind === 'concept') && <div key={i} className="notes" dangerouslySetInnerHTML={{__html: renderMarkdown(block.text)}} />,
       )}
       {editing ? (
         <textarea

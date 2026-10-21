@@ -8,6 +8,117 @@ highlight: matlab
 description: Think in matrices. Build with numbers.
 ---
 
+# Concepts
+
+## Scripts and functions
+@id concept-program
+@kind concept
+@keywords script function file workspace run m-file explain
+@diff Scripts share the workspace; functions have their own.
+
+MATLAB code lives in `.m` files, and there are two kinds.
+
+- A **script** is a list of commands. Running it is like typing them into the Command Window: its variables appear in (and can overwrite) your workspace.
+- A **function file** starts with `function` and has its own private workspace. Only its outputs come back. The file name must match the function name.
+
+```matlab
+% analyse.m — a script
+data = readmatrix("run1.csv");
+peak = findPeak(data(:, 2));      % call a function
+fprintf("Peak: %.3f\n", peak);
+
+function p = findPeak(signal)     % local function: must be at the END of a script
+    p = max(signal);
+end
+```
+
+Run a script by typing its name (`analyse`) or pressing **Run**. If MATLAB says a function is undefined, its file isn't in the current folder or on the path.
+
+## What a function is
+@id concept-function
+@kind concept
+@keywords function inputs outputs arguments call define explain
+@diff [outputs] = name(inputs)
+
+A function takes inputs, runs in its own workspace, and returns outputs.
+
+The first line lists the outputs, the name and the inputs: `function [out1, out2] = name(in1, in2)`. MATLAB passes inputs **by value**: changing an input inside the function doesn't change the caller's variable. To change something, return the new version and assign it.
+
+```matlab
+function [m, s] = summarise(x)
+    m = mean(x);
+    s = std(x);
+end
+
+% calling it:
+% [m, s] = summarise([9.8 10.1 10.0]);
+% m = summarise(data);        % ask for fewer outputs if you like
+```
+
+## How outputs are returned
+@id concept-return
+@kind concept
+@keywords return output value assign function result explain
+@diff Assign to the output variable; return just exits early.
+
+MATLAB has no `return value` statement. You **assign to the output variable** named in the `function` line, and whatever it holds when the function ends is returned.
+
+`return` exists, but it only **exits early** — the outputs must already be set.
+
+```matlab
+function result = safeDivide(a, b)
+    result = NaN;            % set a default first
+    if b == 0
+        return               % leave early; result is NaN
+    end
+    result = a / b;          % this value is returned
+end
+```
+
+"Output argument 'result' not assigned" means some path through the function never set it.
+
+## Everything is a matrix
+@id concept-matrix
+@kind concept
+@keywords matrix array element-wise vectorise dimensions size explain
+@diff Scalars are 1×1 matrices; operators are matrix maths.
+
+MATLAB's basic type is the matrix: a single number is a 1×1 matrix, a row vector is 1×n, a column is n×1.
+
+That's why `*` means matrix multiplication and `.*` means element-by-element. Most errors like "Incorrect dimensions for matrix multiplication" or "Arrays have incompatible sizes" mean a row was used where a column was expected (fix with `'` to transpose), or `*` was used where `.*` was meant.
+
+```matlab
+x = [1 2 3];        % 1×3 row
+y = [4; 5; 6];      % 3×1 column
+size(x), size(y)
+x * y               % 32: (1×3)·(3×1) matrix product
+x .* y'             % [4 10 18]: element-wise, after transposing y
+x + y               % 3×3! implicit expansion of a row and a column
+```
+
+Check sizes with `size()` whenever a result looks surprising.
+
+## One-based indexing
+@id concept-indexing
+@kind concept
+@keywords index 1-based end column major linear indexing explain
+@diff Indexes start at 1; storage is column by column.
+
+Indexes start at **1**, not 0, and matrices are stored **column by column**.
+
+Code ported from Python or C often has off-by-one errors: `x(0)` is an error, and the last element is `x(end)`. Linear indexing `A(k)` counts down the first column, then the next.
+
+```matlab
+A = [1 2 3; 4 5 6];
+A(1, 1)       % 1 — first element
+A(end, end)   % 6 — last element
+A(2)          % 4 — linear index goes down columns first
+A(:)'         % [1 4 2 5 3 6]
+for k = 1:numel(A)   % loops start at 1
+    disp(A(k))
+end
+```
+
 # Basics
 
 ## Variables
