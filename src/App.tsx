@@ -53,7 +53,9 @@ export function App() {
     else root.dataset.theme = preferences.theme;
     root.style.setProperty('--font-size', `${preferences.fontSize}px`);
     root.toggleAttribute('data-wrap', preferences.wrap);
-  }, [preferences.theme, preferences.fontSize, preferences.wrap]);
+    root.dataset.font = preferences.font;
+    root.dataset.spacing = preferences.spacing;
+  }, [preferences.theme, preferences.fontSize, preferences.wrap, preferences.font, preferences.spacing]);
 
   useEffect(() => {
     if (!status) return;

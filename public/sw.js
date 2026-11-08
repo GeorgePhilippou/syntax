@@ -1,5 +1,6 @@
 /* All runtime resources are same-origin. Cached shell works without a network. */
 const CACHE = 'syntax-v1';
+const FONTS = []; // filled in by scripts/version-worker.mjs
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const root = new URL('./', self.location.href);
@@ -10,7 +11,7 @@ self.addEventListener('install', event => {
       .map(match => new URL(match[1], root))
       .filter(url => url.origin === root.origin && /\.(js|css)$/.test(url.pathname));
     const cache = await caches.open(CACHE);
-    await cache.addAll([...assets.map(url => url.href), './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png']);
+    await cache.addAll([...assets.map(url => url.href), ...FONTS.map(f => new URL(f, root).href), './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png']);
     await cache.put(root, response);
     await self.skipWaiting();
   })());

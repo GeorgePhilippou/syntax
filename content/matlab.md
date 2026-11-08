@@ -2,7 +2,7 @@
 name: MATLAB
 symbol: M
 order: 3
-color: #edb491
+color: #f2a161
 version: R2021a+
 highlight: matlab
 description: Think in matrices. Build with numbers.

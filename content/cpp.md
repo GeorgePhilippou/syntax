@@ -2,7 +2,7 @@
 name: C++
 symbol: C⁺⁺
 order: 4
-color: #ccbadf
+color: #b79ee8
 version: C++17
 highlight: cpp
 description: Fine control. Modern abstractions.

@@ -2,7 +2,7 @@
 
 [Open Syntax](https://georgephilippou.github.io/syntax/) · [Source](https://github.com/GeorgePhilippou/syntax)
 
-A personal, offline syntax cheat sheet for **C, Python, MATLAB, C++, Rust, Bash and Git** — the languages I actually use. Each section is a block of one-line rows (what it does → the code), so the syntax is the first thing you see. Python uses the new cheat-sheet format (`layout: sheet` in `content/python.md`); the other languages are being converted from the older card format. Examples in C, C++, Rust, Python and Bash are checked by real compilers and parsers on every build.
+A personal, offline syntax cheat sheet for **C, Python, MATLAB, C++, Rust, Bash and Git** — the languages I actually use. Each section is a block of one-line rows (what it does → the code), so the syntax is the first thing you see. Python and C use the cheat-sheet format (`layout: sheet`); the other languages are being converted from the older card format. Settings offer Atkinson Hyperlegible and OpenDyslexic reading fonts (self-hosted, offline). Examples in C, C++, Rust, Python and Bash are checked by real compilers and parsers on every build.
 
 ![Syntax showing Python cards](preview/syntax.png)
 

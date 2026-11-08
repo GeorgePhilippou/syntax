@@ -2,8 +2,16 @@ import {useEffect, useRef, type ChangeEvent} from 'react';
 import {Download, Upload, X} from 'lucide-react';
 
 export type Theme = 'system' | 'light' | 'dark';
-export type Preferences = {theme: Theme; fontSize: number; showNotes: boolean; wrap: boolean};
-export const defaultPreferences: Preferences = {theme: 'system', fontSize: 15, showNotes: true, wrap: false};
+export type ReadingFont = 'system' | 'hyperlegible' | 'dyslexic';
+export type Spacing = 'compact' | 'comfortable';
+export type Preferences = {theme: Theme; fontSize: number; showNotes: boolean; wrap: boolean; font: ReadingFont; spacing: Spacing};
+export const defaultPreferences: Preferences = {theme: 'system', fontSize: 15, showNotes: true, wrap: false, font: 'system', spacing: 'compact'};
+
+const fonts: [ReadingFont, string, string][] = [
+  ['system', 'System', 'The Mac\'s own font'],
+  ['hyperlegible', 'Hyperlegible', 'Atkinson Hyperlegible: distinct letter shapes, clear 0/O and 1/l/I'],
+  ['dyslexic', 'OpenDyslexic', 'Weighted letter bottoms to stop letters flipping, with extra spacing'],
+];
 
 export type Backup = {favourites: string[]; notes: Record<string, string>; preferences: Preferences};
 
@@ -78,13 +86,38 @@ export function Settings({open, onClose, preferences, onPreferencesChange, backu
         </fieldset>
 
         <fieldset>
+          <legend>Reading font</legend>
+          <div className="segmented">
+            {fonts.map(([font, label, title]) => (
+              <label key={font} title={title}>
+                <input type="radio" name="font" checked={preferences.font === font} onChange={() => set({font})} />
+                <span className={`font-sample font-${font}`}>{label}</span>
+              </label>
+            ))}
+          </div>
+          <p className="hint font-hint">{fonts.find(f => f[0] === preferences.font)![2]}. Code uses a matching easy-to-read monospace.</p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Spacing</legend>
+          <div className="segmented">
+            {(['compact', 'comfortable'] as const).map(spacing => (
+              <label key={spacing}>
+                <input type="radio" name="spacing" checked={preferences.spacing === spacing} onChange={() => set({spacing})} />
+                <span>{spacing[0].toUpperCase() + spacing.slice(1)}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset>
           <legend>Reading</legend>
           <label className="row">
             <span>Text size <strong>{preferences.fontSize}px</strong></span>
             <input type="range" min={13} max={20} value={preferences.fontSize} onChange={e => set({fontSize: Number(e.target.value)})} />
           </label>
           <label className="row">
-            <span>Show explanations under code</span>
+            <span>Show explanations (older card pages)</span>
             <input type="checkbox" checked={preferences.showNotes} onChange={e => set({showNotes: e.target.checked})} />
           </label>
           <label className="row">

@@ -2,7 +2,7 @@
 name: Rust
 symbol: Rs
 order: 6
-color: #e8a2a8
+color: #ec8a8a
 version: Rust 2021
 highlight: rust
 description: Fast, safe and fearless. The compiler has your back.

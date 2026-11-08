@@ -53,6 +53,7 @@ export type Card = {
   check: CheckMode;
   kind: CardKind;
   blocks: Block[];
+  setup: string;   // sheet only: hidden declarations the tests prepend to each row
 };
 
 export type Language = {
@@ -145,7 +146,7 @@ export function parseLanguage(id: string, source: string): Language {
       } else {
         card = {
           id: slugify(heading[2]), language: id, title: heading[2], category,
-          summary: '', keywords: '', diff: '', check: defaultCheck, kind: sheet ? 'sheet' : 'reference', blocks: [],
+          summary: '', keywords: '', diff: '', check: defaultCheck, kind: sheet ? 'sheet' : 'reference', blocks: [], setup: '',
         };
         if (!language.categories.includes(category)) language.categories.push(category);
       }
@@ -159,6 +160,7 @@ export function parseLanguage(id: string, source: string): Language {
       if (key === 'id') card.id = value.trim();
       else if (key === 'keywords') card.keywords = value.trim();
       else if (key === 'diff') card.diff = value.trim();
+      else if (key === 'setup') card.setup += value + '\n';
       else if (key === 'kind') {
         if (value.trim() !== 'concept' && value.trim() !== 'reference') throw new Error(`${id}/${card.id}: unknown kind "${value}"`);
         card.kind = value.trim() as CardKind;
