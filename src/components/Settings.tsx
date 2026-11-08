@@ -117,10 +117,6 @@ export function Settings({open, onClose, preferences, onPreferencesChange, backu
             <input type="range" min={13} max={20} value={preferences.fontSize} onChange={e => set({fontSize: Number(e.target.value)})} />
           </label>
           <label className="row">
-            <span>Show explanations (older card pages)</span>
-            <input type="checkbox" checked={preferences.showNotes} onChange={e => set({showNotes: e.target.checked})} />
-          </label>
-          <label className="row">
             <span>Wrap long code lines</span>
             <input type="checkbox" checked={preferences.wrap} onChange={e => set({wrap: e.target.checked})} />
           </label>

@@ -29,25 +29,29 @@ function cFamily(code, mode, cpp, setup = '') {
   const features = lines.filter(l => /^#define _\w+_SOURCE\b/.test(l)).join('\n');
   const includes = lines.filter(l => l.startsWith('#include')).join('\n');
   const body = lines.filter(l => !l.startsWith('#include') && !/^#define _\w+_SOURCE\b/.test(l)).join('\n');
-  const prelude = features + '\n' + (cpp ? cppHeaders : cHeaders).map(h => `#include <${h}>`).join('\n') + '\n' + includes + '\n' + setup;
+  // C: @setup at file scope. C++: inside main, with the row in its own block,
+  // so lambdas can capture setup variables and rows may reuse a name.
+  const prelude = features + '\n' + (cpp ? cppHeaders : cHeaders).map(h => `#include <${h}>`).join('\n') + '\n' + includes + '\n' + (cpp ? '' : setup);
   const main = cpp ? 'int main()' : 'int main(void)';
   if (mode === 'auto') mode = /\bmain\s*\(/.test(body) ? 'program' : 'body';
   if (mode === 'program') return prelude + body;
-  if (mode === 'top') return `${prelude}${body}\n${main} { return 0; }\n`;
+  if (mode === 'top') return `${prelude}${cpp ? setup : ''}${body}\n${main} { return 0; }\n`;
+  if (cpp) return `${prelude}${main} {\n${setup}\n{\n${body}\n}\nreturn 0;\n}\n`;
   return `${prelude}${main} {\n${body}\nreturn 0;\n}\n`;
 }
 
-function rust(code, mode) {
+// Rust @setup lines are statements (let, struct, use), so they go inside main.
+function rust(code, mode, setup = '') {
   if (mode === 'auto') mode = /\bfn\s+main\s*\(/.test(code) ? 'program' : 'body';
   if (mode === 'program') return code;
   if (mode === 'top') return `${code}\nfn main() {}\n`;
-  return `fn main() {\n${code}\n}\n`;
+  return `#![allow(unused)]\nfn main() {\n${setup}${code}\n}\n`;
 }
 
 const checkers = {
   c: {tool: ['clang'], build: (code, mode, setup) => ['c', cFamily(code, mode, false, setup)], run: f => ['clang', ['-fsyntax-only', '-std=c17', f]]},
   cpp: {tool: ['clang++'], build: (code, mode, setup) => ['cpp', cFamily(code, mode, true, setup)], run: f => ['clang++', ['-fsyntax-only', '-std=c++17', f]]},
-  rust: {tool: ['rustc'], build: (code, mode, setup = '') => ['rs', setup + rust(code, mode)],
+  rust: {tool: ['rustc'], build: (code, mode, setup = '') => ['rs', rust(code, mode, setup)],
     run: f => ['rustc', ['--edition', '2021', '--emit=metadata', '-A', 'warnings', '-o', f + '.rmeta', f]]},
   python: {tool: [python], build: (code, mode, setup = '') => ['py', setup + code], run: f => [python, ['-c', 'import ast,sys; ast.parse(open(sys.argv[1]).read())', f]]},
   javascript: {tool: [process.execPath], build: code => ['mjs', code], run: f => [process.execPath, ['--check', f]]},
