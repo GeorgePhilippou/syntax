@@ -25,7 +25,7 @@ export function SavedView({favourites, notes, actionsFor}: Props) {
         return mine.length > 0 && (
           <section key={language.id} className="section">
             <h2>{language.name}</h2>
-            <div className="cards">
+            <div className={language.layout === 'sheet' ? 'sheet-grid' : 'cards'}>
               {mine.map(card => <CardView key={card.id} card={card} {...actionsFor(card)} />)}
             </div>
           </section>

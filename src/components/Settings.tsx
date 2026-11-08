@@ -21,7 +21,7 @@ type Props = {
 const shortcuts: [string, string][] = [
   ['/  or  ⌘K', 'Search'],
   ['Esc', 'Clear search'],
-  ['1 – 8', 'Switch language'],
+  ['1 – 7', 'Switch language'],
 ];
 
 export function Settings({open, onClose, preferences, onPreferencesChange, backup, onRestore, offline, installPrompt}: Props) {

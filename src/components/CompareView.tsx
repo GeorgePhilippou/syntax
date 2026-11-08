@@ -4,6 +4,7 @@ import {codeBlocks, renderInline, type Card} from '../content/parse.ts';
 import {conceptLanguages, findCard, languageById, languages} from '../content/index.ts';
 import {routeHref} from '../lib/route.ts';
 import {CodeBlock} from './CodeBlock.tsx';
+import {SheetRows} from './SheetSection.tsx';
 
 type Props = {
   selected: string[];
@@ -60,7 +61,7 @@ export function CompareView({selected, onSelectedChange, focusConcept, onStatus}
               <section key={id} id={`compare-${id}`} className={`compare-row${id === focusConcept ? ' highlighted' : ''}`} aria-label={first.title}>
                 <div className="compare-concept">
                   <h2>{first.title}</h2>
-                  <p dangerouslySetInnerHTML={{__html: renderInline(first.summary)}} />
+                  {first.summary && <p dangerouslySetInnerHTML={{__html: renderInline(first.summary)}} />}
                 </div>
                 {columns.map(l => {
                   const card = findCard(l.id, id);
@@ -72,7 +73,9 @@ export function CompareView({selected, onSelectedChange, focusConcept, onStatus}
                       {card ? (
                         <>
                           {card.diff && <p className="diff" dangerouslySetInnerHTML={{__html: renderInline(card.diff)}} />}
-                          {codeBlocks(card).map((block, i) => <CodeBlock key={i} block={block} onCopied={onStatus} />)}
+                          {card.kind === 'sheet'
+                            ? <SheetRows card={card} onStatus={onStatus} />
+                            : codeBlocks(card).map((block, i) => <CodeBlock key={i} block={block} onCopied={onStatus} />)}
                         </>
                       ) : <p className="missing">No direct equivalent.</p>}
                     </div>

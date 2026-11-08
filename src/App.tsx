@@ -115,56 +115,53 @@ export function App() {
   return (
     <div className="app" style={{'--lang': language.color} as CSSProperties}>
       <button className="skip-link" onClick={() => main.current?.focus()}>Skip to content</button>
-      <nav className="rail" aria-label="Languages">
+      <header className="topbar">
         <a className="brand" href={routeHref({view: 'language', language: languageId})}>Syntax<span>.</span></a>
-        <div className="tabs">
+        <nav className="pills" aria-label="Languages">
           {languages.map((l, i) => (
             <a
               key={l.id}
               href={routeHref({view: 'language', language: l.id})}
-              className="tab"
+              className="pill"
               aria-current={route.view === 'language' && !result && l.id === languageId ? 'page' : undefined}
               style={{'--lang': l.color} as CSSProperties}
               title={`${l.name} (${i + 1})`}
               onClick={() => setQuery('')}
             >
-              <span className="tab-symbol">{l.symbol}</span>
-              <span className="tab-name">{l.name}</span>
+              {l.name}
             </a>
           ))}
-        </div>
-        <div className="rail-links">
-          <a href={routeHref({view: 'compare'})} onClick={() => setQuery('')} aria-current={route.view === 'compare' && !result ? 'page' : undefined} title="Compare">
-            <ArrowLeftRight size={18} /><span>Compare</span>
+        </nav>
+        <label className="search">
+          <Search size={16} aria-hidden="true" />
+          <input
+            ref={searchInput}
+            type="search"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search — e.g. py format float"
+            aria-label="Search all languages"
+            autoComplete="off"
+            spellCheck={false}
+          />
+          {query ? (
+            <button className="icon-button" onClick={() => { setQuery(''); searchInput.current?.focus(); }} aria-label="Clear search"><X size={15} /></button>
+          ) : <kbd>/</kbd>}
+        </label>
+        <div className="top-links">
+          <a className="icon-button" href={routeHref({view: 'compare'})} onClick={() => setQuery('')} aria-current={route.view === 'compare' && !result ? 'page' : undefined} title="Compare languages" aria-label="Compare languages">
+            <ArrowLeftRight size={17} />
           </a>
-          <a href={routeHref({view: 'saved'})} onClick={() => setQuery('')} aria-current={route.view === 'saved' && !result ? 'page' : undefined} title="Saved">
-            <Bookmark size={18} /><span>Saved</span>{savedCount > 0 && <em>{savedCount}</em>}
+          <a className="icon-button" href={routeHref({view: 'saved'})} onClick={() => setQuery('')} aria-current={route.view === 'saved' && !result ? 'page' : undefined} title="Saved" aria-label="Saved">
+            <Bookmark size={17} />{savedCount > 0 && <em>{savedCount}</em>}
           </a>
-          <button onClick={() => setSettingsOpen(true)} title="Settings">
-            <SlidersHorizontal size={18} /><span>Settings</span>
+          <button className="icon-button" onClick={() => setSettingsOpen(true)} title="Settings" aria-label="Settings">
+            <SlidersHorizontal size={17} />
           </button>
         </div>
-      </nav>
+      </header>
 
       <div className="workspace">
-        <header className="topbar">
-          <label className="search">
-            <Search size={17} aria-hidden="true" />
-            <input
-              ref={searchInput}
-              type="search"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="Search — try “rust hashmap”"
-              aria-label="Search all languages"
-              autoComplete="off"
-              spellCheck={false}
-            />
-            {query ? (
-              <button className="icon-button" onClick={() => { setQuery(''); searchInput.current?.focus(); }} aria-label="Clear search"><X size={15} /></button>
-            ) : <kbd>/</kbd>}
-          </label>
-        </header>
         <main id="main" ref={main} tabIndex={-1}>{content}</main>
         <footer>{offline.label}</footer>
       </div>

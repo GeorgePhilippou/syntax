@@ -24,13 +24,23 @@
 //   ```
 //
 //   Anything else is notes (Markdown subset: `code`, **bold**, - lists).
+//
+// With `layout: sheet` in the front matter, each ## section is a cheat-sheet
+// block of one-line rows instead (the summary paragraph is optional):
+//
+//   - Label :: code on one line         (… marks schematic code; not checked)
+//   ```python Label                     (a fenced block is a multi-line row)
+//   > A short gotcha or note.
 
 export type CheckMode = 'auto' | 'program' | 'body' | 'top' | 'skip';
-export type CardKind = 'reference' | 'concept';
+export type CardKind = 'reference' | 'concept' | 'sheet';
+export type Layout = 'cards' | 'sheet';
 
 export type CodeBlock = {kind: 'code'; lang: string; caption: string; code: string};
 export type TextBlock = {kind: 'text'; text: string};
-export type Block = CodeBlock | TextBlock;
+export type RowBlock = {kind: 'row'; label: string; code: string; lang: string; multiline: boolean};
+export type NoteBlock = {kind: 'note'; text: string};
+export type Block = CodeBlock | TextBlock | RowBlock | NoteBlock;
 
 export type Card = {
   id: string;
@@ -54,6 +64,7 @@ export type Language = {
   description: string;
   highlight: string;
   order: number;
+  layout: Layout;
   categories: string[];
   cards: Card[];
 };
@@ -88,10 +99,12 @@ export function parseLanguage(id: string, source: string): Language {
     description: meta.description ?? '',
     highlight: meta.highlight ?? id,
     order: Number(meta.order ?? 99),
+    layout: meta.layout === 'sheet' ? 'sheet' : 'cards',
     categories: [],
     cards: [],
   };
   const defaultCheck = (meta.check as CheckMode) ?? 'auto';
+  const sheet = language.layout === 'sheet';
 
   let category = 'General';
   let card: Card | null = null;
@@ -114,7 +127,8 @@ export function parseLanguage(id: string, source: string): Language {
   const finishCard = () => {
     flushText();
     if (!card) return;
-    if (!card.summary) throw new Error(`${id}/${card.id}: missing summary paragraph`);
+    if (sheet && !card.blocks.some(b => b.kind === 'row')) throw new Error(`${id}/${card.id}: sheet section has no rows`);
+    if (!card.summary && !sheet) throw new Error(`${id}/${card.id}: missing summary paragraph`);
     if (language.cards.some(c => c.id === card!.id)) throw new Error(`${id}: duplicate card id "${card.id}"`);
     language.cards.push(card);
     card = null;
@@ -131,7 +145,7 @@ export function parseLanguage(id: string, source: string): Language {
       } else {
         card = {
           id: slugify(heading[2]), language: id, title: heading[2], category,
-          summary: '', keywords: '', diff: '', check: defaultCheck, kind: 'reference', blocks: [],
+          summary: '', keywords: '', diff: '', check: defaultCheck, kind: sheet ? 'sheet' : 'reference', blocks: [],
         };
         if (!language.categories.includes(category)) language.categories.push(category);
       }
@@ -154,6 +168,20 @@ export function parseLanguage(id: string, source: string): Language {
       } else throw new Error(`${id}/${card.id}: unknown directive @${key}`);
       continue;
     }
+    if (sheet) {
+      const row = line.match(/^-\s+(.+?)\s+::\s+(.*)$/);
+      if (row) {
+        flushText();
+        card.blocks.push({kind: 'row', label: row[1], code: row[2], lang: language.highlight, multiline: false});
+        continue;
+      }
+      const note = line.match(/^>\s+(.*)$/);
+      if (note) {
+        flushText();
+        card.blocks.push({kind: 'note', text: note[1]});
+        continue;
+      }
+    }
     const fence = line.match(/^```(\S*)\s*(.*)$/);
     if (fence) {
       flushText();
@@ -161,7 +189,9 @@ export function parseLanguage(id: string, source: string): Language {
       i++;
       while (i < lines.length && !lines[i].startsWith('```')) code.push(lines[i++]);
       if (i >= lines.length) throw new Error(`${id}/${card.id}: unclosed code block`);
-      card.blocks.push({kind: 'code', lang: fence[1] || language.highlight, caption: fence[2], code: code.join('\n')});
+      const lang = fence[1] || language.highlight;
+      if (sheet) card.blocks.push({kind: 'row', label: fence[2], code: code.join('\n'), lang, multiline: true});
+      else card.blocks.push({kind: 'code', lang, caption: fence[2], code: code.join('\n')});
       continue;
     }
     text.push(line);
@@ -172,6 +202,10 @@ export function parseLanguage(id: string, source: string): Language {
 
 export function codeBlocks(card: Card): CodeBlock[] {
   return card.blocks.filter((b): b is CodeBlock => b.kind === 'code');
+}
+
+export function rows(card: Card): RowBlock[] {
+  return card.blocks.filter((b): b is RowBlock => b.kind === 'row');
 }
 
 function escapeHtml(text: string): string {

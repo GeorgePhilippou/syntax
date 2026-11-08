@@ -6,7 +6,7 @@ import {spawn, spawnSync} from 'node:child_process';
 import {mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync} from 'node:fs';
 import {cpus, tmpdir} from 'node:os';
 import {basename, join} from 'node:path';
-import {parseLanguage, codeBlocks} from '../src/content/parse.ts';
+import {parseLanguage, codeBlocks, rows} from '../src/content/parse.ts';
 
 const strict = process.env.SYNTAX_STRICT === '1';
 const python = process.env.SYNTAX_PYTHON || 'python3';
@@ -81,7 +81,7 @@ try {
   let total = 0;
 
   for (const language of languages) {
-    assert(language.cards.length >= 20, `${language.name}: expected at least 20 cards`);
+    assert(language.cards.length >= (language.layout === 'sheet' ? 10 : 20), `${language.name}: too few cards`);
     const checker = checkers[language.id];
     const ready = checker && available(checker.tool[0], checker.tool[0] === 'bash' ? ['-c', 'true'] : ['--version']);
     if (checker && !ready) {
@@ -90,6 +90,18 @@ try {
     }
     for (const card of language.cards) {
       total++;
+      if (card.kind === 'sheet') {
+        // Each row is checked on its own; "…" marks deliberately schematic code.
+        if (!ready || card.check === 'skip') continue;
+        rows(card).forEach((row, index) => {
+          if (row.lang !== language.highlight || row.code.includes('…')) return;
+          const [extension, source] = checker.build(row.code, card.check);
+          const file = join(temp, `${language.id}-${card.id}-row${index}.${extension}`);
+          writeFileSync(file, source);
+          tasks.push(async () => ({label: `${language.name} › ${card.title} › ${row.label}`, ...(await exec(...checker.run(file)))}));
+        });
+        continue;
+      }
       assert(card.summary, `${language.id}/${card.id}: summary`);
       assert(codeBlocks(card).length > 0, `${language.id}/${card.id}: needs at least one code block`);
       if (!ready || card.check === 'skip') continue;

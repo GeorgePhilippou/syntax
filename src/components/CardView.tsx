@@ -4,6 +4,7 @@ import {renderInline, renderMarkdown} from '../content/parse.ts';
 import {isComparable, languageById, type Card} from '../content/index.ts';
 import {routeHref} from '../lib/route.ts';
 import {CodeBlock} from './CodeBlock.tsx';
+import {SheetSection} from './SheetSection.tsx';
 
 export type CardActions = {
   saved: boolean;
@@ -22,7 +23,11 @@ function markTerms(title: string, terms: string[] = []) {
   return words.length ? escaped.replace(new RegExp(`(${words.join('|')})`, 'gi'), '<mark>$1</mark>') : escaped;
 }
 
-export function CardView({card, showLanguage, highlighted, terms, saved, note, showNotes, onToggleSave, onNoteChange, onStatus}: Props) {
+export function CardView(props: Props) {
+  return props.card.kind === 'sheet' ? <SheetSection {...props} /> : <ReferenceCard {...props} />;
+}
+
+function ReferenceCard({card, showLanguage, highlighted, terms, saved, note, showNotes, onToggleSave, onNoteChange, onStatus}: Props) {
   const [editing, setEditing] = useState(false);
   const language = languageById.get(card.language)!;
   const href = routeHref({view: 'language', language: card.language, card: card.id});
@@ -69,7 +74,7 @@ export function CardView({card, showLanguage, highlighted, terms, saved, note, s
       {card.blocks.map((block, i) =>
         block.kind === 'code'
           ? <CodeBlock key={i} block={block} onCopied={onStatus} />
-          : (showNotes || card.kind === 'concept') && <div key={i} className="notes" dangerouslySetInnerHTML={{__html: renderMarkdown(block.text)}} />,
+          : block.kind === 'text' && (showNotes || card.kind === 'concept') && <div key={i} className="notes" dangerouslySetInnerHTML={{__html: renderMarkdown(block.text)}} />,
       )}
       {editing ? (
         <textarea

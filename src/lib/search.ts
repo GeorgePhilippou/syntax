@@ -9,9 +9,9 @@ function fields(card: Card): Fields {
   if (!cached) {
     cached = {
       title: card.title.toLowerCase(),
-      keywords: `${card.keywords} ${card.id.replace(/-/g, ' ')} ${card.category}`.toLowerCase(),
+      keywords: `${card.keywords} ${card.id.replace(/-/g, ' ')} ${card.category} ${card.blocks.map(b => (b.kind === 'row' ? b.label : '')).join(' ')}`.toLowerCase(),
       summary: `${card.summary} ${card.diff}`.toLowerCase(),
-      body: card.blocks.map(b => (b.kind === 'code' ? b.code : b.text)).join('\n').toLowerCase(),
+      body: card.blocks.map(b => (b.kind === 'code' ? b.code : b.kind === 'row' ? b.code : b.text)).join('\n').toLowerCase(),
     };
     fieldCache.set(card, cached);
   }
@@ -56,6 +56,8 @@ export function search(query: string, notes: Record<string, string>): SearchResu
       if (s === 0) { score = 0; break; }
       score += s;
     }
+    // A single sheet row matching every term is the best kind of hit.
+    if (score > 0 && card.kind === 'sheet' && card.blocks.some(b => b.kind === 'row' && terms.every(t => `${b.label} ${b.code}`.toLowerCase().includes(t)))) score += 10;
     if (score > 0) scored.push({card, score});
   }
   scored.sort((a, b) => b.score - a.score);

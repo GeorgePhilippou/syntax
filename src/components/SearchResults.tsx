@@ -47,7 +47,7 @@ export function SearchResults({query, result, current, actionsFor}: Props) {
       {[...groups].map(([id, cards]) => (
         <section key={id} id={`results-${id}`} className="section">
           <h2>{languageById.get(id)!.name}</h2>
-          <div className="cards">
+          <div className={cards.every(c => c.kind === 'sheet') ? 'sheet-grid' : 'cards'}>
             {cards.map(card => <CardView key={card.id} card={card} showLanguage terms={result.terms} {...actionsFor(card)} />)}
           </div>
         </section>
