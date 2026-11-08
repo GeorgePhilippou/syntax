@@ -2,7 +2,7 @@
 name: Bash
 symbol: $_
 order: 7
-color: #74cc96
+color: #2e8b57
 version: Bash 4+ / zsh notes
 highlight: bash
 description: Glue for everything. Quote your variables.

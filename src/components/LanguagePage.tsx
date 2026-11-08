@@ -11,11 +11,9 @@ export function LanguagePage({language, focusCard, actionsFor}: Props) {
   return (
     <>
       <header className="page-head">
-        <div className="page-title">
-          <h1>{language.name}</h1>
-          <span className="version">{language.version}</span>
-          <span className="page-description">{language.description}</span>
-        </div>
+        <p className="eyebrow">{language.version}</p>
+        <h1>{language.name}</h1>
+        <p className="page-description">{language.description} · {language.cards.length} sections · click any code to copy</p>
         <nav className="jump" aria-label={`${language.name} sections`}>
           {language.categories.map(category => (
             <button key={category} onClick={() => jump(category)}>{category}</button>

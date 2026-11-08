@@ -42,7 +42,7 @@ export function App() {
       : route.view === 'compare' && route.concept ? `compare-${route.concept}` : null;
     requestAnimationFrame(() => {
       const element = target && document.getElementById(target);
-      if (element) element.scrollIntoView({block: 'center'});
+      if (element) element.scrollIntoView({block: 'start'});
       else window.scrollTo({top: 0});
     });
   }, [route, languageId]);
@@ -112,58 +112,123 @@ export function App() {
   else if (route.view === 'saved') content = <SavedView favourites={favourites} notes={notes} actionsFor={actionsFor} />;
   else content = <LanguagePage key={languageId} language={language} focusCard={route.card} actionsFor={actionsFor} />;
 
+  // Highlight the section nearest the top in the sidebar contents.
+  const [activeSection, setActiveSection] = useState('');
+  useEffect(() => {
+    if (route.view !== 'language' || result) return;
+    const sections = [...document.querySelectorAll<HTMLElement>('main [id^="card-"]')];
+    const update = () => {
+      let current = sections[0]?.id ?? '';
+      for (const el of sections) if (el.getBoundingClientRect().top < 120) current = el.id;
+      setActiveSection(current);
+    };
+    update();
+    window.addEventListener('scroll', update, {passive: true});
+    return () => window.removeEventListener('scroll', update);
+  }, [route, result, languageId]);
+
+  // Keep the active contents link visible in the sidebar.
+  useEffect(() => {
+    const sidebar = document.querySelector<HTMLElement>('.sidebar');
+    if (sidebar) sidebar.scrollTop = 0;
+  }, [languageId]);
+
+  useEffect(() => {
+    const sidebar = document.querySelector<HTMLElement>('.sidebar');
+    const link = document.querySelector<HTMLElement>('.contents a[aria-current]');
+    if (!sidebar || !link || window.scrollY < 40) return;
+    const box = link.getBoundingClientRect();
+    if (box.top < 40 || box.bottom > window.innerHeight - 40) sidebar.scrollTop += box.top - window.innerHeight / 2;
+  }, [activeSection]);
+
   const savedCount = new Set([...favourites, ...Object.keys(notes)]).size;
+
+  const languageNav = (className: string) => (
+    <nav className={className} aria-label="Languages">
+      {languages.map((l, i) => (
+        <a
+          key={l.id}
+          href={routeHref({view: 'language', language: l.id})}
+          className="lang-link"
+          aria-current={route.view === 'language' && !result && l.id === languageId ? 'page' : undefined}
+          style={{'--lang': l.color} as CSSProperties}
+          title={`${l.name} (${i + 1})`}
+          onClick={() => setQuery('')}
+        >
+          <span className="lang-name">{l.name}</span>
+          <span className="lang-count">{l.cards.length}</span>
+        </a>
+      ))}
+    </nav>
+  );
+
+  const showContents = route.view === 'language' && !result;
 
   return (
     <div className="app" style={{'--lang': language.color} as CSSProperties}>
       <button className="skip-link" onClick={() => main.current?.focus()}>Skip to content</button>
-      <header className="topbar">
-        <a className="brand" href={routeHref({view: 'language', language: languageId})}>Syntax<span>.</span></a>
-        <nav className="pills" aria-label="Languages">
-          {languages.map((l, i) => (
-            <a
-              key={l.id}
-              href={routeHref({view: 'language', language: l.id})}
-              className="pill"
-              aria-current={route.view === 'language' && !result && l.id === languageId ? 'page' : undefined}
-              style={{'--lang': l.color} as CSSProperties}
-              title={`${l.name} (${i + 1})`}
-              onClick={() => setQuery('')}
-            >
-              {l.name}
-            </a>
-          ))}
-        </nav>
-        <label className="search">
-          <Search size={16} aria-hidden="true" />
-          <input
-            ref={searchInput}
-            type="search"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            placeholder="Search — e.g. py format float"
-            aria-label="Search all languages"
-            autoComplete="off"
-            spellCheck={false}
-          />
-          {query ? (
-            <button className="icon-button" onClick={() => { setQuery(''); searchInput.current?.focus(); }} aria-label="Clear search"><X size={15} /></button>
-          ) : <kbd>/</kbd>}
-        </label>
-        <div className="top-links">
-          <a className="icon-button" href={routeHref({view: 'compare'})} onClick={() => setQuery('')} aria-current={route.view === 'compare' && !result ? 'page' : undefined} title="Compare languages" aria-label="Compare languages">
-            <ArrowLeftRight size={17} />
-          </a>
-          <a className="icon-button" href={routeHref({view: 'saved'})} onClick={() => setQuery('')} aria-current={route.view === 'saved' && !result ? 'page' : undefined} title="Saved" aria-label="Saved">
-            <Bookmark size={17} />{savedCount > 0 && <em>{savedCount}</em>}
-          </a>
-          <button className="icon-button" onClick={() => setSettingsOpen(true)} title="Settings" aria-label="Settings">
-            <SlidersHorizontal size={17} />
-          </button>
-        </div>
-      </header>
+
+      <aside className="sidebar">
+        <a className="brand" href={routeHref({view: 'language', language: languageId})}>
+          <span className="brand-mark" aria-hidden="true">{'{ }'}</span> Syntax
+        </a>
+        <p className="side-label">Languages</p>
+        {languageNav('side-languages')}
+        {showContents && (
+          <nav className="contents" aria-label={`${language.name} contents`}>
+            <p className="side-label">{language.name} contents</p>
+            {language.categories.map(category => (
+              <div key={category} className="contents-group">
+                <p className="contents-category">{category}</p>
+                {language.cards.filter(c => c.category === category).map(card => (
+                  <a
+                    key={card.id}
+                    href={routeHref({view: 'language', language: language.id, card: card.id})}
+                    aria-current={activeSection === `card-${language.id}-${card.id}` ? 'location' : undefined}
+                  >
+                    {card.title}
+                  </a>
+                ))}
+              </div>
+            ))}
+          </nav>
+        )}
+      </aside>
 
       <div className="workspace">
+        <header className="topbar">
+          <a className="brand mobile-only" href={routeHref({view: 'language', language: languageId})}>
+            <span className="brand-mark" aria-hidden="true">{'{ }'}</span> Syntax
+          </a>
+          <label className="search">
+            <Search size={16} aria-hidden="true" />
+            <input
+              ref={searchInput}
+              type="search"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Search syntax — e.g. py format float"
+              aria-label="Search all languages"
+              autoComplete="off"
+              spellCheck={false}
+            />
+            {query ? (
+              <button className="icon-button" onClick={() => { setQuery(''); searchInput.current?.focus(); }} aria-label="Clear search"><X size={15} /></button>
+            ) : <kbd>/</kbd>}
+          </label>
+          <div className="top-links">
+            <a className="top-link" href={routeHref({view: 'compare'})} onClick={() => setQuery('')} aria-current={route.view === 'compare' && !result ? 'page' : undefined} title="Compare languages">
+              <ArrowLeftRight size={16} /><span>Compare</span>
+            </a>
+            <a className="top-link" href={routeHref({view: 'saved'})} onClick={() => setQuery('')} aria-current={route.view === 'saved' && !result ? 'page' : undefined} title="Saved">
+              <Bookmark size={16} /><span>Saved</span>{savedCount > 0 && <em>{savedCount}</em>}
+            </a>
+            <button className="top-link" onClick={() => setSettingsOpen(true)} title="Settings">
+              <SlidersHorizontal size={16} /><span>Settings</span>
+            </button>
+          </div>
+          {languageNav('mobile-languages')}
+        </header>
         <main id="main" ref={main} tabIndex={-1}>{content}</main>
         <footer>{offline.label}</footer>
       </div>

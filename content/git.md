@@ -2,7 +2,7 @@
 name: Git
 symbol: git
 order: 8
-color: #b9a891
+color: #7a6a58
 version: Git 2.30+
 highlight: bash
 check: skip
