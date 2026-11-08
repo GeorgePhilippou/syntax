@@ -7,565 +7,163 @@ on: light
 version: Git 2.30+
 highlight: bash
 check: skip
-description: Every change, accounted for. Every mistake, undoable.
+layout: sheet
+description: Save, share and undo your work.
 ---
-
-# Setup
-
-## First-time configuration
-@id config
-@keywords config user name email editor default branch global setup
-@diff git config --global
-
-Tell Git who you are (once per machine).
-
-```bash
-git config --global user.name "Your Name"
-git config --global user.email "you@example.com"
-git config --global init.defaultBranch main
-git config --global core.editor "code --wait"   # or nano, vim
-git config --global pull.rebase false           # merge on pull (or true to rebase)
-git config --list --show-origin                 # see everything and where it's set
-```
-
-## Start a repository
-@id init
-@keywords init clone new repository create copy remote
-@diff git init / git clone URL
-
-Create a new repository or copy an existing one.
-
-```bash
-git init                                  # in the current folder
-git init my-project                       # in a new folder
-git clone https://github.com/user/repo.git
-git clone git@github.com:user/repo.git my-folder   # SSH, custom folder
-git clone --depth 1 URL                   # latest snapshot only (faster)
-```
-
-## Ignoring files
-@id gitignore
-@keywords gitignore ignore untrack exclude rm --cached
-@diff .gitignore patterns; rm --cached to untrack.
-
-Keep files out of version control.
-
-```bash
-# .gitignore
-node_modules/
-dist/
-*.log
-.env
-!keep.log          # exception: do track this one
-/build             # only at the repo root
-
-git rm --cached secrets.env     # stop tracking a file you already committed
-git check-ignore -v file.log    # which rule ignores this file?
-```
-
-`.gitignore` doesn't affect files that are already tracked — untrack them with `git rm --cached` first.
-
-## Aliases
-@id aliases
-@keywords alias shortcut config log graph
-@diff git config --global alias.NAME
-
-Shortcuts for long commands.
-
-```bash
-git config --global alias.st "status -sb"
-git config --global alias.lg "log --oneline --graph --decorate --all"
-git config --global alias.last "log -1 HEAD --stat"
-git config --global alias.undo "reset --soft HEAD~1"
-git st
-git lg
-```
 
 # Everyday
 
+## Set up
+@id first-time-configuration
+@keywords config name email init clone default branch editor
+- Your name / email :: git config --global user.name "George Philippou"; git config --global user.email "you@example.com"
+- Default branch main :: git config --global init.defaultBranch main
+- Editor :: git config --global core.editor "code --wait"
+- New repository :: git init
+- Copy a repository :: git clone https://github.com/GeorgePhilippou/syntax.git
+- Show settings :: git config --list
+
 ## Status and diff
-@id status
+@id status-and-diff
 @keywords status diff staged changes what changed
-@diff git status; git diff (--staged)
-
-See what's changed.
-
-```bash
-git status                  # overview
-git status -sb              # short form with branch
-git diff                    # unstaged changes
-git diff --staged           # what will be committed
-git diff HEAD               # all changes since the last commit
-git diff --stat             # files and line counts only
-git diff main...feature     # changes on feature since it branched
-```
+- What changed :: git status
+- Short view :: git status -s
+- Unstaged changes :: git diff
+- Staged changes :: git diff --staged
+- One file :: git diff src/main.c
+- Words, not lines :: git diff --word-diff
 
 ## Stage and commit
-@id commit
-@keywords add commit stage message -m -a patch partial
-@diff git add then git commit -m
+@id stage-and-commit
+@keywords add commit message stage all patch
+- Stage a file :: git add src/main.c
+- Stage everything :: git add -A
+- Stage parts of a file :: git add -p
+- Commit :: git commit -m "Average 16 ADC samples per step"
+- Stage tracked + commit :: git commit -am "Fix CV step size"
+- Unstage :: git restore --staged src/main.c
+> One logical change per commit; write the message as "what it does": Add, Fix, Remove…
 
-Record changes.
+## Push and pull
+@id push-and-pull
+@keywords push pull fetch remote origin upstream sync github
+- Send commits :: git push
+- First push of a branch :: git push -u origin my-branch
+- Get and merge :: git pull
+- Get, replay mine on top :: git pull --rebase
+- Just download :: git fetch
+- Remotes :: git remote -v
+- Add GitHub remote :: git remote add origin https://github.com/user/repo.git
+> Pull before you start working, especially when another machine or session also pushes.
 
-```bash
-git add file.txt                 # stage one file
-git add src/                     # stage a folder
-git add -A                       # stage everything (new, changed, deleted)
-git add -p                       # choose hunks interactively
-git commit -m "Add login form"
-git commit -am "Fix typo"        # stage tracked files and commit
-git commit                       # opens the editor for a longer message
-```
-
-Good messages: a short summary line (≤ 50 chars, imperative: "Add", "Fix"), a blank line, then details if needed.
-
-## Fix the last commit
-@id amend
-@keywords amend last commit message forgot file edit
-@diff git commit --amend
-
-Change the most recent commit.
-
-```bash
-git commit --amend -m "Better message"   # reword
-git add forgotten.txt
-git commit --amend --no-edit             # add a file, keep the message
-```
-
-Amending rewrites history. Only amend commits you haven't pushed — or force-push carefully (see "Force push safely").
-
-## Viewing history
-@id log
-@keywords log history oneline graph show commits author since file
-@diff git log with filters.
-
-Browse commits.
-
-```bash
-git log --oneline                    # compact
-git log --oneline --graph --all      # branch structure
-git log -5                           # last five
-git log -p file.txt                  # history of a file with diffs
-git log --author="Ada" --since="2 weeks ago"
-git log main..feature                # commits on feature not on main
-git show abc1234                     # one commit in full
-git show HEAD~2:src/app.py           # a file as it was two commits ago
-```
-
-## Search history
-@id log-search
-@keywords grep log -S pickaxe find commit message blame who changed
-@diff log --grep, log -S, blame.
-
-Find when and why something changed.
-
-```bash
-git log --grep="login"              # commit messages containing "login"
-git log -S "calculateTotal"         # commits that added/removed this text
-git log -G "TODO.*urgent"           # commits whose diff matches a regex
-git blame src/app.py                # who last changed each line
-git blame -L 40,60 src/app.py       # only lines 40–60
-git grep "useState"                 # search tracked files
-```
-
-## Moving and deleting files
-@id files
-@keywords rm mv rename delete move file
-@diff git mv / git rm
-
-Rename or remove tracked files.
-
-```bash
-git mv old_name.py new_name.py
-git rm unused.py                   # delete and stage the deletion
-git rm -r old_folder/
-git rm --cached big_file.zip       # untrack but keep on disk
-```
+## History
+@id viewing-history
+@keywords log history graph show blame search who changed
+- Compact log :: git log --oneline
+- Graph of branches :: git log --oneline --graph --all
+- Last 5 :: git log -5
+- One commit :: git show a1b2c3d
+- History of a file :: git log --follow -p src/adc.c
+- Who changed each line :: git blame src/adc.c
+- Commits mentioning text :: git log -S "LPM3_bits"
+- By message :: git log --grep "DAC"
 
 # Branches
 
-## Create and switch branches
-@id branch
-@keywords branch switch checkout create new list
-@diff git switch -c NAME
+## Branches
+@id create-and-switch-branches
+@keywords branch switch checkout create delete list rename
+- List :: git branch
+- New and switch :: git switch -c feature/averaging
+- Switch :: git switch main
+- Rename current :: git branch -m new-name
+- Delete (merged) :: git branch -d feature/averaging
+- Delete (force) :: git branch -D experiment
+- Delete on GitHub :: git push origin --delete feature/averaging
 
-Work on separate lines of development.
-
-```bash
-git branch                       # list local branches
-git branch -a                    # include remote branches
-git switch -c feature/login      # create and switch
-git switch main                  # switch to an existing branch
-git switch -                     # back to the previous branch
-git checkout -b feature/login    # older equivalent of switch -c
-```
-
-## Merge a branch
-@id merge
-@keywords merge combine fast-forward no-ff branch into main
-@diff git merge BRANCH from the target branch.
-
-Bring another branch's work into the current one.
-
-```bash
-git switch main
-git pull                         # make sure main is current
-git merge feature/login
-git merge --no-ff feature/login  # always create a merge commit
-git merge --squash feature/login # one combined change, then commit
-git commit -m "Add login"
-git merge --abort                # back out of a conflicted merge
-```
-
-## Resolve conflicts
-@id conflicts
-@keywords conflict merge conflict resolve markers ours theirs
-@diff Edit markers, git add, then continue.
-
-Fix a merge or rebase conflict.
-
-```bash
-git status                       # lists "both modified" files
-# Edit each file; remove the markers:
-# <<<<<<< HEAD
-# your version
-# =======
-# their version
-# >>>>>>> feature
-git add resolved_file.py
-git commit                       # for a merge
-git rebase --continue            # for a rebase
-
-git checkout --ours file.py      # keep your side entirely
-git checkout --theirs file.py    # keep their side entirely
-```
-
-During a **rebase**, "ours" and "theirs" are swapped: "ours" is the branch you're rebasing onto.
-
-## Rebase
-@id rebase
-@keywords rebase onto update branch linear history interactive squash
-@diff git rebase main replays your commits on top.
-
-Replay your commits on top of another branch.
-
-```bash
-git switch feature
-git fetch origin
-git rebase origin/main           # move feature onto the latest main
-git rebase --continue            # after fixing conflicts
-git rebase --abort               # give up, back to how it was
-```
-
-Never rebase commits that others have already pulled. Rebasing your own feature branch is fine.
-
-## Squash and tidy commits
-@id squash
-@keywords interactive rebase squash fixup reword reorder edit commits
-@diff git rebase -i HEAD~N
-
-Combine, reorder or reword recent commits.
-
-```bash
-git rebase -i HEAD~3
-# In the editor, change "pick" to:
-#   squash (s)  merge into the previous commit, edit message
-#   fixup  (f)  merge into the previous commit, discard message
-#   reword (r)  change the message
-#   drop   (d)  remove the commit
-# Reorder lines to reorder commits.
-
-git commit --fixup abc1234       # mark a fix for an earlier commit
-git rebase -i --autosquash main  # apply all fixups automatically
-```
-
-## Delete and rename branches
-@id branch-delete
-@keywords delete branch rename remote branch prune -d -D
-@diff git branch -d; git push origin --delete.
-
-Clean up branches.
-
-```bash
-git branch -d feature/login           # delete (only if merged)
-git branch -D feature/login           # force delete
-git push origin --delete feature/login   # delete on the remote
-git branch -m new-name                # rename the current branch
-git branch -m old new                 # rename another branch
-git fetch --prune                     # drop references to deleted remote branches
-git branch --merged main              # branches safe to delete
-```
-
-## Cherry-pick
-@id cherry-pick
-@keywords cherry pick copy commit apply one commit
-@diff git cherry-pick SHA
-
-Copy a single commit onto the current branch.
-
-```bash
-git cherry-pick abc1234
-git cherry-pick abc1234..def5678      # a range (excluding abc1234)
-git cherry-pick -n abc1234            # apply changes without committing
-git cherry-pick --abort
-```
-
-# Remotes
-
-## Push and pull
-@id push-pull
-@keywords push pull fetch upstream origin sync remote -u
-@diff git push -u origin BRANCH the first time.
-
-Sync with a remote repository.
-
-```bash
-git push -u origin feature/login   # first push: sets the upstream
-git push                           # afterwards
-git pull                           # fetch + merge (or rebase)
-git pull --rebase                  # fetch + rebase your local commits
-git fetch                          # download without changing your files
-git fetch --all --prune
-git status                         # "ahead 2, behind 1" etc.
-```
-
-## Manage remotes
-@id remotes
-@keywords remote add origin url set-url upstream fork
-@diff git remote add NAME URL
-
-Connect your repository to remote ones.
-
-```bash
-git remote -v                               # list remotes
-git remote add origin git@github.com:me/repo.git
-git remote set-url origin https://github.com/me/repo.git
-git remote add upstream https://github.com/original/repo.git
-git fetch upstream
-git merge upstream/main                     # update a fork
-git remote rename origin old-origin
-```
-
-## Force push safely
-@id force-push
-@keywords force push force-with-lease rewrite history overwrite remote
-@diff --force-with-lease, never plain --force.
-
-Overwrite a remote branch after rewriting history.
-
-```bash
-git push --force-with-lease
-```
-
-`--force-with-lease` refuses if someone else pushed in the meantime; plain `--force` silently discards their work. Never force-push to a shared `main`.
-
-## Tags and releases
-@id tags
-@keywords tag release version annotated push tags
-@diff git tag -a v1.0 -m "…"
-
-Mark versions.
-
-```bash
-git tag                           # list
-git tag -a v1.2.0 -m "Release 1.2.0"
-git tag v1.2.0 abc1234            # tag an older commit
-git push origin v1.2.0            # tags aren't pushed by default
-git push --tags
-git tag -d v1.2.0                 # delete locally
-git push origin --delete v1.2.0   # delete on the remote
-```
-
-# Undo & fix
-
-## Discard local changes
-@id discard
-@keywords discard changes restore checkout revert file throw away uncommitted
-@diff git restore FILE
-
-Throw away changes you haven't committed.
-
-```bash
-git restore file.txt             # discard unstaged changes to a file
-git restore .                    # discard all unstaged changes
-git restore --staged file.txt    # unstage, keep the changes
-git restore --source=HEAD~2 file.txt   # file as it was 2 commits ago
-git clean -n                     # preview deleting untracked files
-git clean -fd                    # delete untracked files and folders
-```
-
-`git restore` and `git clean -f` can't be undone — the changes were never committed.
-
-## Undo commits (reset)
-@id reset
-@keywords reset soft mixed hard undo commit uncommit go back HEAD~1
-@diff --soft keeps staged; --mixed keeps files; --hard discards.
-
-Move your branch back to an earlier commit.
-
-```bash
-git reset --soft HEAD~1    # undo commit, keep changes staged
-git reset HEAD~1           # undo commit, keep changes unstaged (--mixed)
-git reset --hard HEAD~1    # undo commit and DISCARD its changes
-git reset --hard origin/main   # make local branch match the remote exactly
-```
-
-Use `reset` only on commits you haven't pushed. For pushed commits, use `revert`.
-
-## Revert a pushed commit
-@id revert
-@keywords revert undo pushed commit public history safe
-@diff git revert SHA adds an opposite commit.
-
-Undo a commit without rewriting history.
-
-```bash
-git revert abc1234             # new commit that reverses abc1234
-git revert HEAD                # reverse the latest commit
-git revert -m 1 merge_sha      # revert a merge commit (keep parent 1)
-git revert --no-commit a..b    # several reverts in one commit
-```
-
-## Recover lost work
-@id reflog
-@keywords reflog recover lost commit deleted branch undo reset hard
-@diff git reflog remembers where HEAD has been.
-
-Get back commits after a bad reset, rebase or branch delete.
-
-```bash
-git reflog                         # every position HEAD has been at
-# a1b2c3d HEAD@{0}: reset: moving to HEAD~3
-# e4f5a6b HEAD@{1}: commit: Add parser   <- the one you want
-git reset --hard e4f5a6b           # go back there
-git branch rescued e4f5a6b         # or put a branch on it
-```
-
-Anything you've ever committed is recoverable through the reflog for about 90 days.
+## Merge and rebase
+@id merge-a-branch
+@keywords merge rebase conflict resolve squash fast forward
+- Merge into current :: git merge feature/averaging
+- Rebase onto main :: git rebase main
+- Squash last 3 commits :: git reset --soft HEAD~3; git commit -m "One clean commit"
+- See conflicts :: git status
+- Keep mine / theirs :: git checkout --ours file.c; git checkout --theirs file.c
+- After fixing conflicts :: git add file.c; git commit
+- Give up a merge / rebase :: git merge --abort; git rebase --abort
+- Continue rebase :: git rebase --continue
+> Conflict markers: <<<<<<< yours, ======= , >>>>>>> theirs. Edit, delete the markers, then add.
 
 ## Stash
 @id stash
-@keywords stash save temporary shelve pop apply switch branch
-@diff git stash; git stash pop.
+@keywords stash save later pop apply switch branch
+- Put changes aside :: git stash
+- With a name :: git stash push -m "half-done plot"
+- List :: git stash list
+- Bring back :: git stash pop
+- Include new files :: git stash -u
 
-Put work aside temporarily.
+## Tags and releases
+@id tags-and-releases
+@keywords tag release version annotate push tags
+- Tag this commit :: git tag -a v1.2 -m "Firmware 1.2"
+- List tags :: git tag
+- Push tags :: git push --tags
+- Check out a tag :: git switch --detach v1.2
 
-```bash
-git stash                          # stash tracked changes
-git stash -u                       # include untracked files
-git stash push -m "half-done login"
-git stash list
-git stash pop                      # re-apply and remove the latest
-git stash apply stash@{1}          # re-apply, keep in the list
-git stash drop stash@{1}
-git stash branch new-branch        # new branch from a stash
+# Undo
+
+## Undo changes
+@id discard-local-changes
+@keywords undo discard restore reset revert amend uncommit
+- Discard edits to a file :: git restore src/main.c
+- Discard all edits :: git restore .
+- Fix last commit message :: git commit --amend -m "Better message"
+- Add a forgotten file to last commit :: git add f.c; git commit --amend --no-edit
+- Uncommit, keep changes :: git reset --soft HEAD~1
+- Uncommit, discard changes :: git reset --hard HEAD~1
+- Undo a pushed commit safely :: git revert a1b2c3d
+- Get a file from a commit :: git restore --source a1b2c3d src/main.c
+> Never reset --hard or force-push commits others may have pulled; use revert instead.
+
+## Recover and fix mistakes
+@id recover-lost-work
+@keywords reflog recover lost commit wrong branch detached head cherry pick
+- Everything HEAD has been :: git reflog
+- Go back to a lost commit :: git switch -c rescue HEAD@{3}
+- Committed to wrong branch :: git switch -c right-branch; git switch main; git reset --hard HEAD~1
+- Copy one commit here :: git cherry-pick a1b2c3d
+- Left detached HEAD :: git switch -c keep-this
+- Force push (safely) :: git push --force-with-lease
+- Find the bad commit :: git bisect start; git bisect bad; git bisect good v1.0
+
+# Repository
+
+## Ignore files
+@id ignoring-files
+@keywords gitignore ignore untrack remove cached
+```bash .gitignore
+*.o
+*.elf
+build/
+__pycache__/
+.DS_Store
+data/raw/
 ```
+- Stop tracking, keep file :: git rm --cached secrets.txt
+- Why is it ignored :: git check-ignore -v build/fw.elf
+- Remove untracked files (preview) :: git clean -n
+- Remove untracked files :: git clean -fd
 
-## Committed to the wrong branch
-@id wrong-branch
-@keywords wrong branch move commits main accident
-@diff Branch off, then reset the original.
+## Moving files
+@id moving-and-deleting-files
+@keywords mv rm rename delete move
+- Rename / move :: git mv old.c new.c
+- Delete :: git rm notes.txt
 
-Move recent commits from main to a new branch.
-
-```bash
-# You're on main with 2 commits that belong on a feature branch:
-git branch feature/oops            # new branch pointing at your commits
-git reset --hard HEAD~2            # move main back (only if not pushed!)
-git switch feature/oops
-```
-
-If the commits should go to an **existing** branch: switch to it, `git cherry-pick` them, then reset `main`.
-
-## Detached HEAD
-@id detached
-@keywords detached HEAD checkout commit lost not on a branch
-@diff Create a branch to keep your commits.
-
-You checked out a commit and aren't on a branch.
-
-```bash
-git switch -c keep-this-work       # keep any commits you made here
-git switch main                    # or just go back
-```
-
-# Advanced
-
-## Find a bug with bisect
-@id bisect
-@keywords bisect binary search bug regression find commit
-@diff git bisect start/good/bad
-
-Binary-search history for the commit that broke something.
-
-```bash
-git bisect start
-git bisect bad                     # current commit is broken
-git bisect good v1.0               # this one worked
-# Git checks out a middle commit. Test it, then:
-git bisect good                    # or: git bisect bad
-# ...repeat until Git names the first bad commit
-git bisect reset                   # back to where you started
-
-git bisect run ./test.sh           # automate: script exits 0 = good
-```
-
-## Worktrees
-@id worktree
-@keywords worktree multiple branches checkout parallel
-@diff git worktree add PATH BRANCH
-
-Check out several branches at once in separate folders.
-
-```bash
-git worktree add ../hotfix main         # main in a sibling folder
-git worktree add -b feature/x ../x      # new branch in a new folder
-git worktree list
-git worktree remove ../hotfix
-```
-
-## Submodules
-@id submodules
-@keywords submodule nested repository dependency update recursive
-@diff git submodule add / update --init --recursive
-
-Include another repository inside yours.
-
-```bash
-git submodule add https://github.com/user/lib.git vendor/lib
-git clone --recurse-submodules URL
-git submodule update --init --recursive   # after a plain clone
-git submodule update --remote              # pull latest submodule commits
-```
-
-## Compare and patch
-@id patches
-@keywords diff patch apply format-patch compare branches files
-@diff git diff > file.patch; git apply.
-
-Share changes as files.
-
-```bash
-git diff main..feature --stat           # summary of differences
-git diff main feature -- src/app.py     # one file between branches
-git diff > changes.patch
-git apply changes.patch
-git format-patch -3                     # last 3 commits as .patch files
-git am *.patch                          # apply them as commits
-```
-
-## Clean up a repository
-@id maintenance
-@keywords gc prune clean size large files count-objects
-@diff git gc; git count-objects -vH.
-
-Inspect and shrink a repository.
-
-```bash
-git count-objects -vH            # repository size
-git gc                           # compress and clean up
-git remote prune origin          # stale remote branches
-git ls-files | wc -l             # number of tracked files
-```
-
-To remove a large file from all history, use the separate `git filter-repo` tool, then force-push. Everyone must re-clone afterwards.
+## Shortcuts
+@id aliases
+@keywords alias shortcut config
+- Log alias :: git config --global alias.lg "log --oneline --graph --all"
+- Status alias :: git config --global alias.st "status -s"
+- Use them :: git lg; git st

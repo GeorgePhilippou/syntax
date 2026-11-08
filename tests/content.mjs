@@ -100,7 +100,7 @@ try {
           const modes = card.check === 'auto' && language.id !== 'python' ? ['body', 'top'] : [card.check];
           // Rows may be bare expressions ("a / b  // 3"); terminate them for the compiler.
           let code = row.code;
-          if (language.id !== 'python' && !row.multiline && !code.startsWith('#')) {
+          if (['c', 'cpp', 'rust'].includes(language.id) && !row.multiline && !code.startsWith('#')) {
             const [, body, comment = ''] = code.match(/^(.*?)(\s*\/\/.*)?$/s);
             if (!/[;}]\s*$/.test(body)) code = `${body};${comment}`;
           }
