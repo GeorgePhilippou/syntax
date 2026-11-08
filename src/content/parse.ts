@@ -66,6 +66,7 @@ export type Language = {
   highlight: string;
   order: number;
   layout: Layout;
+  onPage: 'light' | 'dark';   // text colour that reads on the language colour
   categories: string[];
   cards: Card[];
 };
@@ -101,6 +102,7 @@ export function parseLanguage(id: string, source: string): Language {
     highlight: meta.highlight ?? id,
     order: Number(meta.order ?? 99),
     layout: meta.layout === 'sheet' ? 'sheet' : 'cards',
+    onPage: meta.on === 'light' ? 'light' : 'dark',
     categories: [],
     cards: [],
   };

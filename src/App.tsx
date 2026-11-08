@@ -152,6 +152,7 @@ export function App() {
           className="lang-link"
           aria-current={route.view === 'language' && !result && l.id === languageId ? 'page' : undefined}
           style={{'--lang': l.color} as CSSProperties}
+          data-on={l.onPage}
           title={`${l.name} (${i + 1})`}
           onClick={() => setQuery('')}
         >
@@ -165,7 +166,7 @@ export function App() {
   const showContents = route.view === 'language' && !result;
 
   return (
-    <div className="app" style={{'--lang': language.color} as CSSProperties}>
+    <div className="app" data-on={language.onPage} style={{'--lang': language.color} as CSSProperties}>
       <button className="skip-link" onClick={() => main.current?.focus()}>Skip to content</button>
 
       <aside className="sidebar">
