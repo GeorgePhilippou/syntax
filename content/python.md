@@ -2,7 +2,7 @@
 name: Python
 symbol: Py
 order: 2
-color: #2f6fb3
+color: #3a7fc4
 version: Python 3.10+
 highlight: python
 layout: sheet

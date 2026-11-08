@@ -2,7 +2,7 @@
 name: C
 symbol: C
 order: 1
-color: #c8962a
+color: #d39b2a
 version: C17 · MSP430
 highlight: c
 layout: sheet
