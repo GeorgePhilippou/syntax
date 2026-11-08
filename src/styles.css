@@ -576,6 +576,32 @@ h1 { font-size: 2.6rem; font-weight: 600; letter-spacing: -0.02em; }
 }
 .toast.visible { opacity: 1; transform: translate(-50%, 0); }
 
+/* ---------- Glossary tooltips ---------- */
+
+.term { cursor: help; border-radius: 3px; text-decoration: underline dotted color-mix(in oklab, currentColor 35%, transparent); text-underline-offset: 3px; }
+.term:hover { background: color-mix(in oklab, var(--lang) 22%, transparent); text-decoration-color: currentColor; }
+
+.tooltip {
+  position: fixed; z-index: 60;
+  transform: translate(-50%, -100%);
+  max-width: min(340px, calc(100vw - 16px));
+  padding: 8px 11px 9px;
+  font-size: 0.82rem; line-height: 1.45;
+  color: #f5efe7; background: #1d1a16;
+  border-radius: 8px;
+  box-shadow: 0 10px 28px #0000004d;
+  pointer-events: none;
+  animation: tip-in 0.12s ease-out;
+}
+.tooltip.below { transform: translate(-50%, 0); }
+.tooltip code { display: block; margin-bottom: 2px; font-size: 0.8rem; font-weight: 700; color: #fff; }
+.tooltip span { display: block; color: #e3dccf; }
+@keyframes tip-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tooltip { background: #f5efe7; color: #17140f; } :root:not([data-theme="light"]) .tooltip code { color: #17140f; } :root:not([data-theme="light"]) .tooltip span { color: #3b352d; } }
+:root[data-theme="dark"] .tooltip { background: #f5efe7; color: #17140f; }
+:root[data-theme="dark"] .tooltip code { color: #17140f; }
+:root[data-theme="dark"] .tooltip span { color: #3b352d; }
+
 /* ---------- Settings ---------- */
 
 .settings {

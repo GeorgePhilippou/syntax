@@ -1,4 +1,5 @@
 import {parseLanguage, type Card, type Language} from './parse.ts';
+import {parseTerms, type Glossary} from './terms.ts';
 
 // Every content/*.md file becomes a language, bundled at build time.
 const sources = import.meta.glob('../../content/*.md', {query: '?raw', import: 'default', eager: true}) as Record<string, string>;
@@ -8,6 +9,12 @@ export const languages: Language[] = Object.entries(sources)
   .sort((a, b) => a.order - b.order);
 
 export const languageById = new Map(languages.map(l => [l.id, l]));
+
+// Hover explanations, one glossary per language (content/terms/<id>.md).
+const termSources = import.meta.glob('../../content/terms/*.md', {query: '?raw', import: 'default', eager: true}) as Record<string, string>;
+export const glossaries = new Map<string, Glossary>(
+  Object.entries(termSources).map(([path, source]) => [path.match(/([\w-]+)\.md$/)![1], parseTerms(source)]),
+);
 
 export const allCards: Card[] = languages.flatMap(l => l.cards);
 

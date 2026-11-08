@@ -75,7 +75,7 @@ export function CompareView({selected, onSelectedChange, focusConcept, onStatus}
                           {card.diff && <p className="diff" dangerouslySetInnerHTML={{__html: renderInline(card.diff)}} />}
                           {card.kind === 'sheet'
                             ? <SheetRows card={card} onStatus={onStatus} />
-                            : codeBlocks(card).map((block, i) => <CodeBlock key={i} block={block} onCopied={onStatus} />)}
+                            : codeBlocks(card).map((block, i) => <CodeBlock key={i} block={block} language={card.language} onCopied={onStatus} />)}
                         </>
                       ) : <p className="missing">No direct equivalent.</p>}
                     </div>

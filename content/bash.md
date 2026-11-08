@@ -230,7 +230,7 @@ log INFO "sweep started"
 
 ## Serial ports and devices
 @id serial-ports
-@keywords serial port usb tty board msp430 screen baud device list
+@keywords serial port usb tty board microcontroller screen baud device list
 - List serial ports (Mac) :: ls /dev/tty.usb*
 - List serial ports (Linux) :: ls /dev/ttyUSB* /dev/ttyACM*
 - USB devices (Mac) :: system_profiler SPUSBDataType

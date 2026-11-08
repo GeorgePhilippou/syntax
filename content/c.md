@@ -4,10 +4,10 @@ symbol: C
 order: 1
 color: #ebae35
 on: dark
-version: C17 · MSP430
+version: C17
 highlight: c
 layout: sheet
-description: Firmware and close-to-the-metal code.
+description: Programs, data and low-level code.
 ---
 
 # Basics
@@ -24,11 +24,11 @@ description: Firmware and close-to-the-metal code.
 - Float literal :: float g = 1.5f;    // 1.5 alone is a double
 - Unsigned / long literal :: 100u; 100000UL;
 - Hex / binary-ish :: uint8_t m = 0x3F;
-- Shared with an ISR :: volatile uint8_t flag = 0;
+- Can change behind your back :: volatile int flag = 0;
 - Keeps value between calls :: static int count = 0;
 - Size in bytes :: sizeof(uint32_t)
 - Limits :: INT16_MAX; UINT16_MAX; INT32_MIN
-> On MSP430 int is 16 bits: use uint32_t whenever a value can exceed 32767.
+> int is only guaranteed 16 bits: use int32_t or int64_t when values can be large.
 
 ## Printing and formatting
 @id printing-output
@@ -45,7 +45,7 @@ description: Firmware and close-to-the-metal code.
 - uint32_t portably :: printf("%" PRIu32, t);
 - Into a buffer :: snprintf(buf, sizeof buf, "%d,%u\r\n", n, raw);
 - size_t :: printf("%zu", sizeof buf);
-> printf float support is often disabled in MSP430 builds: print scaled integers instead.
+> Match the specifier to the type: %d int, %ld long, %zu size_t, %f double (a float is promoted).
 
 ## Operators
 @id operators
@@ -205,9 +205,68 @@ typedef struct {
 - Check it :: if (x == NULL) { return -1; }
 - Grow :: float *t = realloc(x, 2 * n * sizeof *x);
 - Free :: free(c); c = NULL;
-> Avoid the heap in firmware: use static or global buffers sized at compile time.
+> Every malloc needs exactly one free; free(NULL) is safe, freeing twice is not.
 
-# Embedded
+# Standard library
+
+## Maths functions
+@id math
+@keywords math sqrt pow sin cos exp log fabs floor ceil round fmin fmax hypot atan2 isnan math.h
+@setup double x = 2.0, y = 3.0; float f = 1.5f;
+- Include (link with -lm) :: #include <math.h>
+- Square root / power :: sqrt(x); pow(x, y)
+- Exp / logs :: exp(x); log(x); log10(x); log2(x)
+- Trig (radians) :: sin(x); cos(x); tan(x); atan2(y, x)
+- Absolute :: fabs(x); abs(-3)
+- Round :: floor(x); ceil(x); round(x); trunc(x)
+- Min / max :: fmin(x, y); fmax(x, y)
+- Hypotenuse :: hypot(x, y)
+- Float versions :: sqrtf(f); fabsf(f)
+- Check for NaN / infinity :: isnan(x); isinf(x)
+- Pi (not in standard C) :: #define PI 3.14159265358979323846
+
+## Characters and conversions
+@id character-tests
+@keywords ctype isdigit isalpha isspace toupper tolower atoi atof strtol strtod convert number string
+@setup char c = 'a'; const char *s = "42"; char buf[16]; int n = 42; double d;
+- Is digit / letter :: isdigit(c); isalpha(c); isalnum(c)
+- Is whitespace :: isspace(c)
+- Case :: toupper(c); tolower(c)
+- Char to digit :: int v = c - '0';
+- String to int :: n = (int)strtol(s, NULL, 10);
+- String to double :: d = strtod(s, NULL);
+- Quick (no error checks) :: n = atoi(s); d = atof(s);
+- Number to string :: snprintf(buf, sizeof buf, "%d", n);
+
+## Sorting and searching
+@id sorting
+@keywords qsort bsearch compare sort array search function pointer
+```c Compare function for qsort
+int cmp_int(const void *a, const void *b)
+{
+    int x = *(const int *)a, y = *(const int *)b;
+    return (x > y) - (x < y);
+}
+```
+@setup int cmp_int(const void *a, const void *b); int arr[5] = {3, 1, 2, 5, 4}; int key = 2;
+- Sort an array :: qsort(arr, 5, sizeof arr[0], cmp_int);
+- Binary search (sorted) :: int *hit = bsearch(&key, arr, 5, sizeof arr[0], cmp_int);
+- Linear search :: for (int i = 0; i < 5; i++) if (arr[i] == key) { break; }
+- Min of an array :: int m = arr[0]; for (int i = 1; i < 5; i++) if (arr[i] < m) m = arr[i];
+
+## Random numbers and time
+@id random-numbers
+@keywords rand srand random time clock seconds timing difftime sleep
+@setup clock_t t0; char buf[32]; time_t now;
+- Seed once :: srand((unsigned)time(NULL));
+- Random int 0..n-1 :: int r = rand() % 10;
+- Random double 0..1 :: double u = rand() / (double)RAND_MAX;
+- Seconds since 1970 :: time_t now = time(NULL);
+- CPU time :: t0 = clock();
+- Elapsed seconds :: double s = (double)(clock() - t0) / CLOCKS_PER_SEC;
+- Date as text :: strftime(buf, sizeof buf, "%Y-%m-%d", localtime(&now));
+
+# Bits and bytes
 
 ## Bit manipulation
 @id bitwise-operators
@@ -227,12 +286,12 @@ typedef struct {
 - Check flag :: if (flags & FLAG_READY) { }
 > Use unsigned types for bit work: shifting signed negatives is implementation-defined.
 
-## Integer and fixed-point maths
+## Integer maths
 @id fixed-point
-@keywords adc scale volts millivolts overflow promotion fixed point q15 rounding average integer maths
+@keywords scale overflow promotion fixed point q15 rounding average integer maths divide
 @setup uint16_t raw = 2048; int32_t sum = 0, x = 0, d = 1, avg; int16_t q = 0; uint16_t a = 1, b = 2; long lx = 0; float f = 0;
 @setup #define MAX 100
-- ADC to mV (12-bit, 2.5 V) :: int32_t mV = (int32_t)raw * 2500 / 4095;
+- Scale to a range :: int32_t mV = (int32_t)raw * 2500 / 4095;
 - Multiply before divide :: (x * 1000) / 4095    // not x / 4095 * 1000
 - Widen first :: (uint32_t)a * b
 - Round to nearest :: (x + d / 2) / d
@@ -240,33 +299,7 @@ typedef struct {
 - Q15 multiply :: int16_t r = (int16_t)(((int32_t)q * q) >> 15);
 - Clamp :: if (x > MAX) x = MAX;
 - Absolute :: abs(x); labs(lx); fabsf(f);
-> uint16_t * uint16_t is computed as 16-bit int on MSP430 and overflows: cast to uint32_t first.
-
-## Registers and MSP430
-@id msp430
-@check skip
-@keywords msp430 register port gpio watchdog interrupt isr pragma vector lpm low power delay timer adc
-- Include :: #include <msp430.h>
-- Stop watchdog :: WDTCTL = WDTPW | WDTHOLD;
-- Pin as output :: P1DIR |= BIT0;
-- Set / clear pin :: P1OUT |= BIT0; P1OUT &= ~BIT0;
-- Toggle LED :: P1OUT ^= BIT0;
-- Read input :: if (P1IN & BIT3) { }
-- Pull-up :: P1REN |= BIT3; P1OUT |= BIT3;
-- Unlock GPIO (FRAM parts) :: PM5CTL0 &= ~LOCKLPM5;
-- Busy wait :: __delay_cycles(1000);
-- Enable interrupts :: __enable_interrupt();
-- Sleep until ISR :: __bis_SR_register(LPM3_bits | GIE);
-- Wake from ISR :: __bic_SR_register_on_exit(LPM3_bits);
-```c Interrupt service routine
-#pragma vector = TIMER0_A0_VECTOR
-__interrupt void timer_isr(void)
-{
-    tick = 1;    // volatile, read in main loop
-}
-```
-- Atomic section :: __disable_interrupt(); …; __enable_interrupt();
-> Keep ISRs short: set a volatile flag, do the work in the main loop.
+> Integer overflow is silent (and undefined for signed types): widen before multiplying large values.
 
 ## Bytes and buffers
 @id bytes
@@ -331,7 +364,7 @@ fclose(f);
 
 ## Compile and build
 @id compiling
-@keywords gcc clang compile link flags warnings make makefile debug optimize msp430-elf-gcc
+@keywords gcc clang compile link flags warnings make makefile debug optimize
 ```bash Compile and run
 gcc -std=c17 -Wall -Wextra -O2 -o analyse main.c stats.c -lm
 ./analyse data.csv
@@ -339,8 +372,8 @@ gcc -std=c17 -Wall -Wextra -O2 -o analyse main.c stats.c -lm
 ```bash Debug build with checks
 gcc -g -O0 -fsanitize=address,undefined main.c -o analyse
 ```
-```bash MSP430
-msp430-elf-gcc -mmcu=msp430fr2433 -Os -o fw.elf main.c
+```bash Cross-compile for a microcontroller
+arm-none-eabi-gcc -mcpu=cortex-m4 -Os -c main.c
 ```
 ```bash Makefile
 CFLAGS = -std=c17 -Wall -Wextra -O2

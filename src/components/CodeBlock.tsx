@@ -3,9 +3,9 @@ import {Check, Copy} from 'lucide-react';
 import type {CodeBlock as Block} from '../content/parse.ts';
 import {highlight} from '../lib/highlight.ts';
 
-type Props = {block: Block; onCopied: (message: string) => void};
+type Props = {block: Block; language?: string; onCopied: (message: string) => void};
 
-export function CodeBlock({block, onCopied}: Props) {
+export function CodeBlock({block, language, onCopied}: Props) {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -29,7 +29,7 @@ export function CodeBlock({block, onCopied}: Props) {
         {copied ? <Check size={14} /> : <Copy size={14} />}
       </button>
       <pre tabIndex={0}>
-        <code dangerouslySetInnerHTML={{__html: highlight(block.code, block.lang)}} />
+        <code dangerouslySetInnerHTML={{__html: highlight(block.code, block.lang, language)}} />
       </pre>
     </div>
   );

@@ -11,6 +11,7 @@ import {SearchResults} from './components/SearchResults.tsx';
 import {CompareView} from './components/CompareView.tsx';
 import {SavedView} from './components/SavedView.tsx';
 import {Settings, defaultPreferences, type Preferences} from './components/Settings.tsx';
+import {Tooltip} from './components/Tooltip.tsx';
 
 export function App() {
   const route = useRoute();
@@ -249,6 +250,7 @@ export function App() {
         offline={offline.label}
         installPrompt={offline.install}
       />
+      <Tooltip />
       <div className={`toast${status ? ' visible' : ''}`} role="status" aria-live="polite">{status}</div>
     </div>
   );

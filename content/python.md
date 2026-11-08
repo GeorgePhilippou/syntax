@@ -288,7 +288,7 @@ args = parser.parse_args()
 
 ## Serial port
 @id serial-port
-@keywords pyserial uart com usb board device msp430 baud bytes struct
+@keywords pyserial uart com usb board device microcontroller baud bytes struct
 ```python Open, write, read a line
 import serial
 with serial.Serial("/dev/tty.usbmodem1101", 115200, timeout=1) as port:

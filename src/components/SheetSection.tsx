@@ -40,8 +40,8 @@ export function SheetRows({card, terms, onStatus}: {card: Card; terms?: string[]
         return (
           <div key={i} className={`row${block.multiline ? ' multiline' : ''}`}>
             <span className="row-label">{block.label}</span>
-            <button className="row-code" onClick={() => copy(block.code)} title="Click to copy">
-              <code dangerouslySetInnerHTML={{__html: highlight(block.code, block.lang)}} />
+            <button className="row-code" onClick={() => copy(block.code)} aria-label={`Copy: ${block.code}`}>
+              <code dangerouslySetInnerHTML={{__html: highlight(block.code, block.lang, card.language)}} />
             </button>
           </div>
         );

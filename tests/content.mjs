@@ -7,6 +7,7 @@ import {mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync
 import {cpus, tmpdir} from 'node:os';
 import {basename, join} from 'node:path';
 import {parseLanguage, codeBlocks, rows} from '../src/content/parse.ts';
+import {parseTerms} from '../src/content/terms.ts';
 
 const strict = process.env.SYNTAX_STRICT === '1';
 const python = process.env.SYNTAX_PYTHON || 'python3';
@@ -150,6 +151,12 @@ try {
     }
   }
 
+  // Hover glossaries: must parse, with no duplicate terms.
+  let termCount = 0;
+  for (const f of readdirSync('content/terms').filter(f => f.endsWith('.md'))) {
+    termCount += parseTerms(readFileSync(join('content/terms', f), 'utf8')).size;
+  }
+
   const results = await pool(tasks, Math.max(2, cpus().length));
   const failures = results.filter(r => r.status !== 0);
   for (const failure of failures) console.error(`\n✗ ${failure.label}\n${failure.output.trim()}`);
@@ -158,7 +165,7 @@ try {
   const shared = new Map();
   for (const language of languages) for (const card of language.cards) shared.set(card.id, (shared.get(card.id) ?? 0) + 1);
   console.log(`Validated ${total} cards in ${languages.length} languages; ${results.length} code blocks compiled or parsed; ` +
-    `${[...shared.values()].filter(n => n > 1).length} concepts are comparable across languages.`);
+    `${[...shared.values()].filter(n => n > 1).length} concepts are comparable across languages; ${termCount} glossary terms.`);
   if (skipped.size) console.warn(`Skipped (toolchain missing): ${[...skipped].join(', ')}. Set SYNTAX_STRICT=1 to make this an error.`);
   console.log('Not machine-checked: MATLAB (no runtime) and Git (commands).');
 } finally {

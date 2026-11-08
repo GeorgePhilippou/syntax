@@ -73,7 +73,7 @@ function ReferenceCard({card, showLanguage, highlighted, terms, saved, note, sho
       <p className="summary" dangerouslySetInnerHTML={{__html: renderInline(card.summary)}} />
       {card.blocks.map((block, i) =>
         block.kind === 'code'
-          ? <CodeBlock key={i} block={block} onCopied={onStatus} />
+          ? <CodeBlock key={i} block={block} language={card.language} onCopied={onStatus} />
           : block.kind === 'text' && (showNotes || card.kind === 'concept') && <div key={i} className="notes" dangerouslySetInnerHTML={{__html: renderMarkdown(block.text)}} />,
       )}
       {editing ? (
