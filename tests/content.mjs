@@ -86,8 +86,8 @@ try {
   let total = 0;
 
   for (const language of languages) {
-    assert(language.cards.length >= (language.layout === 'sheet' ? 10 : 20), `${language.name}: too few cards`);
-    const checker = checkers[language.id];
+    assert(language.cards.length >= (language.group === 'library' ? 4 : language.layout === 'sheet' ? 10 : 20), `${language.name}: too few cards`);
+    const checker = checkers[language.id] ?? (language.group === 'library' ? checkers[language.highlight] : undefined);
     const ready = checker && available(checker.tool[0], checker.tool[0] === 'bash' ? ['-c', 'true'] : ['--version']);
     if (checker && !ready) {
       if (strict) throw new Error(`${language.name}: ${checker.tool[0]} is not installed`);
@@ -99,7 +99,8 @@ try {
         // Each row is checked on its own; "…" marks deliberately schematic code.
         if (!ready || card.check === 'skip') continue;
         rows(card).forEach((row, index) => {
-          if (row.lang !== language.highlight || row.code.includes('…') || /^#include\s+"/.test(row.code)) return; // project headers can't be checked alone
+          if (row.lang !== language.highlight || row.code.includes('…') || /^#include\s+"/.test(row.code)) return;
+          if (language.highlight === 'python' && row.code.startsWith('%')) return; // IPython magics such as %matplotlib qt // project headers can't be checked alone
           // Statements are tried inside main(); if that fails, at file scope
           // (function and type definitions). @setup supplies declarations.
           const modes = card.check === 'auto' && language.id !== 'python' ? ['body', 'top'] : [card.check];
@@ -158,6 +159,7 @@ try {
   // Hover glossaries: must parse, with no duplicate terms.
   let termCount = 0;
   for (const f of readdirSync('content/terms').filter(f => f.endsWith('.md'))) {
+    if (!files.includes(f)) throw new Error(`content/terms/${f} has no matching content/${f}`);
     termCount += parseTerms(readFileSync(join('content/terms', f), 'utf8')).size;
   }
 

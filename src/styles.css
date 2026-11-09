@@ -323,6 +323,7 @@ h1 { font-size: 2.6rem; font-weight: 600; letter-spacing: -0.02em; }
 /* ---------- Cheat-sheet blocks ---------- */
 
 .sheet-grid { columns: 2 420px; column-gap: 20px; }
+.sheet-grid.single { columns: auto; max-width: 980px; }
 
 .sheet-section {
   break-inside: avoid;

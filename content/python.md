@@ -286,26 +286,6 @@ args = parser.parse_args()
 - Sleep :: time.sleep(0.5)
 - Timestamp :: datetime.now().strftime("%Y-%m-%d_%H%M%S")
 
-## Serial port
-@id serial-port
-@keywords pyserial uart com usb board device microcontroller baud bytes struct
-```python Open, write, read a line
-import serial
-with serial.Serial("/dev/tty.usbmodem1101", 115200, timeout=1) as port:
-    port.write(b"START\n")
-    line = port.readline().decode().strip()
-```
-- Read n bytes :: data = port.read(64)
-- Bytes waiting :: port.in_waiting
-- Clear input :: port.reset_input_buffer()
-- Parse a CSV line :: t, v = map(float, line.split(","))
-- Bytes ↔ text :: b"OK".decode(); "GO".encode()
-- Unpack binary :: struct.unpack("<hH", data[:4])
-```bash List ports
-python -m serial.tools.list_ports
-```
-> pip install pyserial, but import serial.
-
 ## Imports and environments
 @id imports-and-modules
 @keywords import module package pip conda venv install environment requirements
@@ -327,117 +307,13 @@ pip freeze > requirements.txt
 
 # Data
 
-## NumPy arrays
-@id numpy-arrays
-@keywords numpy array linspace arange zeros shape mask where argmax index column
-- Create :: a = np.array([1.0, 2.0, 3.0])
-- Step range :: np.arange(0, 1, 0.01)
-- N points :: np.linspace(-0.5, 0.8, 131)
-- Zeros / ones :: np.zeros(100); np.ones((3, 4))
-- Size :: a.shape; a.size; len(a)
-- Element / slice :: a[0]; a[-1]; a[10:20]
-- Mask :: a[a > 0.5]
-- Indices where true :: idx = np.where(v > 0.2)[0]
-- Index of max :: i = np.argmax(current)
-- Nearest value :: i = np.argmin(np.abs(v - 0.3))
-- Column / row :: m[:, 0]; m[0, :]
-- Columns to matrix :: np.column_stack([t, v])
-- Reshape :: a.reshape(-1, 2)
-- Join :: np.concatenate([a, b])
-- Copy :: b = a.copy()
-> Maths is elementwise: a * b is MATLAB a .* b; a @ b is a matrix product.
-
-## NumPy maths
-@id numpy-maths
-@keywords mean std median sum cumsum diff gradient integrate trapz interp smooth polyfit nan
-- Stats :: a.mean(); a.std(ddof=1); np.median(a)
-- Min / max / range :: a.min(); a.max(); np.ptp(a)
-- Sum / running sum :: a.sum(); np.cumsum(a)
-- Difference / slope :: np.diff(a); np.gradient(i, v)
-- Integrate :: np.trapezoid(i, t)    # np.trapz before NumPy 2
-- Interpolate :: np.interp(x_new, x, y)
-- Moving average :: np.convolve(a, np.ones(5) / 5, mode="same")
-- Line fit :: slope, intercept = np.polyfit(x, y, 1)
-- Evaluate polynomial :: np.polyval(coeffs, x)
-- Clip :: np.clip(a, 0, 1)
-- Ignore NaN :: np.nanmean(a); np.isnan(a)
-
-## Loading and saving data
-@id loading-and-saving-arrays
-@keywords loadtxt savetxt genfromtxt npy npz mat matlab file csv load save
-- Load CSV :: data = np.loadtxt("run.csv", delimiter=",", skiprows=1)
-- Split columns :: t, v, i = data.T
-- Missing values / names :: np.genfromtxt("run.csv", delimiter=",", names=True)
-- Save CSV :: np.savetxt("out.csv", np.column_stack([t, v]), delimiter=",", header="t,v", comments="")
-- Binary :: np.save("run.npy", a); a = np.load("run.npy")
-- Several arrays :: np.savez("run.npz", t=t, v=v)
-- MATLAB .mat :: scipy.io.loadmat("run.mat")["v"].ravel()
-
-## pandas
-@id pandas-basics
-@keywords pandas dataframe read_csv excel filter column groupby concat describe
-- Load :: df = pd.read_csv("run.csv")
-- Excel sheet :: pd.read_excel("runs.xlsx", sheet_name="CV")
-- Inspect :: df.head(); df.info(); df.describe()
-- Column :: df["voltage"]
-- Several columns :: df[["time", "voltage"]]
-- Filter rows :: df[df["voltage"] > 0.2]
-- Two conditions :: df[(df.v > 0) & (df.i < 1e-6)]
-- New column :: df["power"] = df.v * df.i
-- Rename :: df = df.rename(columns={"V": "voltage"})
-- Row by position :: df.iloc[0]
-- Group :: df.groupby("sensor")["peak"].mean()
-- Sort :: df.sort_values("time")
-- To NumPy :: df["voltage"].to_numpy()
-- Save :: df.to_csv("out.csv", index=False)
-- Stack many files :: pd.concat([pd.read_csv(p) for p in paths], ignore_index=True)
-
-## Plotting
-@id line-plot
-@keywords matplotlib plot figure axes label legend scatter errorbar subplot savefig log twin
-```python Figure
-fig, ax = plt.subplots(figsize=(6, 4))
-ax.plot(v, i * 1e6, label="run 1")
-ax.set_xlabel("Potential (V)")
-ax.set_ylabel("Current (µA)")
-ax.legend()
-fig.tight_layout()
-plt.show()
-```
-- Line style :: ax.plot(x, y, "--", color="C1", linewidth=1.5)
-- Scatter :: ax.scatter(x, y, s=10)
-- Error bars :: ax.errorbar(x, m, yerr=s, fmt="o", capsize=3)
-- Limits :: ax.set_xlim(-0.5, 0.8)
-- Log axis :: ax.set_yscale("log")
-- Grid :: ax.grid(alpha=0.3)
-- Second y-axis :: ax2 = ax.twinx()
-- Grid of plots :: fig, axs = plt.subplots(2, 2, sharex=True)
-- Histogram :: ax.hist(data, bins=30)
-- Heatmap :: im = ax.imshow(m, aspect="auto"); fig.colorbar(im)
-- Label a point :: ax.annotate("peak", (vp, ip))
-- Save :: fig.savefig("fig.png", dpi=300, bbox_inches="tight")
-- Vector (papers) :: fig.savefig("fig.pdf")
-- Close in a loop :: plt.close(fig)
-
-## Fitting and signals
-@id curve-fitting
-@keywords scipy curve_fit regression ttest correlation peaks smoothing filter savgol butter
-```python curve_fit
-from scipy.optimize import curve_fit
-
-def model(x, a, k):
-    return a * np.exp(-k * x)
-
-popt, pcov = curve_fit(model, x, y, p0=[1.0, 0.1])
-perr = np.sqrt(np.diag(pcov))
-```
-- Imports :: from scipy import stats, signal
-- Linear regression :: res = stats.linregress(x, y); r2 = res.rvalue ** 2
-- t-test :: stats.ttest_ind(a, b); stats.ttest_rel(before, after)
-- Correlation :: np.corrcoef(x, y)[0, 1]
-- Find peaks :: peaks, _ = signal.find_peaks(i, prominence=1e-7)
-- Smooth :: signal.savgol_filter(i, 11, 3)
-- Low-pass :: b, a = signal.butter(4, 0.1); y = signal.filtfilt(b, a, x)
+## Science libraries
+@id science-stack
+@keywords numpy pandas matplotlib scipy libraries import stack data analysis plotting
+- Usual imports :: import numpy as np; import pandas as pd; import matplotlib.pyplot as plt
+- SciPy pieces :: from scipy import signal, stats, optimize
+- Check versions :: np.__version__; pd.__version__
+> Full sheets: see NumPy, pandas, Matplotlib, SciPy, Parsing & serial, EIS & models and Recipes under Python libraries.
 
 # Classes
 

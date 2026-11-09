@@ -23,7 +23,7 @@ export function LanguagePage({language, focusCard, actionsFor}: Props) {
       {language.categories.map(category => (
         <section key={category} id={`section-${category}`} className="section" aria-label={category}>
           <h2>{category}</h2>
-          <div className={sheet ? 'sheet-grid' : 'cards'}>
+          <div className={sheet ? `sheet-grid${language.columns === 1 ? ' single' : ''}` : 'cards'}>
             {language.cards.filter(c => c.category === category).map(card => (
               <CardView key={card.id} card={card} highlighted={card.id === focusCard} {...actionsFor(card)} />
             ))}

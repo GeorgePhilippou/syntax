@@ -12,8 +12,17 @@ export const languageById = new Map(languages.map(l => [l.id, l]));
 
 // Hover explanations, one glossary per language (content/terms/<id>.md).
 const termSources = import.meta.glob('../../content/terms/*.md', {query: '?raw', import: 'default', eager: true}) as Record<string, string>;
-export const glossaries = new Map<string, Glossary>(
+const ownGlossaries = new Map<string, Glossary>(
   Object.entries(termSources).map(([path, source]) => [path.match(/([\w-]+)\.md$/)![1], parseTerms(source)]),
+);
+// A library page also explains its parents' terms (NumPy pages still explain
+// print, for, len…); its own entries win.
+export const glossaries = new Map<string, Glossary>(
+  languages.map(l => {
+    const merged: Glossary = new Map();
+    for (const id of [...l.parents, l.id]) for (const [k, v] of ownGlossaries.get(id) ?? []) merged.set(k, v);
+    return [l.id, merged];
+  }),
 );
 
 export const allCards: Card[] = languages.flatMap(l => l.cards);

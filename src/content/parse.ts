@@ -67,6 +67,10 @@ export type Language = {
   order: number;
   layout: Layout;
   onPage: 'light' | 'dark';   // text colour that reads on the language colour
+  group: 'language' | 'library';
+  parents: string[];          // glossaries this page also uses, e.g. python
+  aliases: string[];          // extra search prefixes, e.g. np
+  columns: number;            // 1 for pages of long snippets (Recipes)
   categories: string[];
   cards: Card[];
 };
@@ -103,6 +107,10 @@ export function parseLanguage(id: string, source: string): Language {
     order: Number(meta.order ?? 99),
     layout: meta.layout === 'sheet' ? 'sheet' : 'cards',
     onPage: meta.on === 'light' ? 'light' : 'dark',
+    group: meta.group === 'library' ? 'library' : 'language',
+    parents: (meta.parents ?? '').split(/\s+/).filter(Boolean),
+    aliases: (meta.aliases ?? '').split(/\s+/).filter(Boolean),
+    columns: Number(meta.columns ?? 2),
     categories: [],
     cards: [],
   };

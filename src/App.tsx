@@ -144,9 +144,9 @@ export function App() {
 
   const savedCount = new Set([...favourites, ...Object.keys(notes)]).size;
 
-  const languageNav = (className: string) => (
+  const languageNav = (className: string, list = languages) => (
     <nav className={className} aria-label="Languages">
-      {languages.map((l, i) => (
+      {list.map((l, i) => (
         <a
           key={l.id}
           href={routeHref({view: 'language', language: l.id})}
@@ -154,7 +154,7 @@ export function App() {
           aria-current={route.view === 'language' && !result && l.id === languageId ? 'page' : undefined}
           style={{'--lang': l.color} as CSSProperties}
           data-on={l.onPage}
-          title={`${l.name} (${i + 1})`}
+          title={l.name}
           onClick={() => setQuery('')}
         >
           <span className="lang-name">{l.name}</span>
@@ -175,7 +175,9 @@ export function App() {
           <span className="brand-mark" aria-hidden="true">{'{ }'}</span> Syntax
         </a>
         <p className="side-label">Languages</p>
-        {languageNav('side-languages')}
+        {languageNav('side-languages', languages.filter(l => l.group === 'language'))}
+        <p className="side-label">Python libraries</p>
+        {languageNav('side-languages', languages.filter(l => l.group === 'library'))}
         {showContents && (
           <nav className="contents" aria-label={`${language.name} contents`}>
             <p className="side-label">{language.name} contents</p>

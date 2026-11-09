@@ -29,7 +29,7 @@ type Props = {
 const shortcuts: [string, string][] = [
   ['/  or  ⌘K', 'Search'],
   ['Esc', 'Clear search'],
-  ['1 – 7', 'Switch language'],
+  ['1 – 9', 'Switch page'],
 ];
 
 export function Settings({open, onClose, preferences, onPreferencesChange, backup, onRestore, offline, installPrompt}: Props) {

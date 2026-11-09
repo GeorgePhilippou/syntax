@@ -24,6 +24,7 @@ for (const language of languages) {
   languageAliases.set(language.id, language.id);
   languageAliases.set(language.name.toLowerCase(), language.id);
 }
+for (const language of languages) for (const alias of language.aliases) languageAliases.set(alias, language.id);
 for (const [alias, id] of [['py', 'python'], ['js', 'javascript'], ['c++', 'cpp'], ['rs', 'rust'], ['sh', 'bash'], ['shell', 'bash'], ['m', 'matlab']]) {
   if (languages.some(l => l.id === id)) languageAliases.set(alias, id);
 }
